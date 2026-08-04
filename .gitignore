@@ -1,0 +1,10 @@
+build/
+cmake_targets/Logs/
+*.o
+*.a
+*.so
+*.log
+target/
+*.zip
+*.tar.gz
+.upstream_oai_compare/
