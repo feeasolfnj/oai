@@ -5546,7 +5546,15 @@ simde_mm_pause (void) {
       __asm__ __volatile ("dbar 0");
   #elif defined(HEDLEY_GCC_VERSION)
     #if defined(SIMDE_ARCH_RISCV32) || defined(SIMDE_ARCH_RISCV64)
-      __builtin_riscv_pause();
+      /* RISC-V pause hint: use inline asm since __builtin_riscv_pause
+       * is only available in GCC 12+. The 'pause' pseudo-instruction
+       * is part of the Zihintpause extension (RISC-V manual). For older
+       * toolchains, fall back to a nop. */
+      #if __GNUC__ >= 12
+        __builtin_riscv_pause();
+      #else
+        __asm__ __volatile__ (".insn i 0x0F, 0, x0, x0, 0x010" ::: "memory");
+      #endif
     #else
       __asm__ __volatile__ ("nop" ::: "memory");
     #endif

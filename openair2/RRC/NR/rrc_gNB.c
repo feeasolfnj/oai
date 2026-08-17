@@ -214,6 +214,9 @@ static void nr_rrc_addmod_drbs(int rnti,
   if (drb_list == NULL || bearer_list == NULL)
     return;
 
+  LOG_I(NR_RRC, "nr_rrc_addmod_drbs: drb_list count=%d, bearer_list count=%d\n",
+        drb_list->list.count, bearer_list->list.count);
+
   for (int i = 0; i < drb_list->list.count; i++) {
     const NR_DRB_ToAddMod_t *drb = drb_list->list.array[i];
     for (int j = 0; j < bearer_list->list.count; j++) {
@@ -222,6 +225,7 @@ static void nr_rrc_addmod_drbs(int rnti,
           && bearer->servedRadioBearer->present == NR_RLC_BearerConfig__servedRadioBearer_PR_drb_Identity
           && drb->drb_Identity == bearer->servedRadioBearer->choice.drb_Identity) {
         nr_rlc_add_drb(rnti, drb->drb_Identity, bearer);
+        LOG_I(NR_RRC, "nr_rrc_addmod_drbs: matched DRB %ld, calling nr_rlc_add_drb\n", drb->drb_Identity);
       }
     }
   }
@@ -581,7 +585,7 @@ static void rrc_gNB_process_RRCSetupComplete(const protocol_ctxt_t *const ctxt_p
   ue_context_pP->ue_context.Srb[2].Active = 0;
   ue_context_pP->ue_context.StatusRrc = NR_RRC_CONNECTED;
 
-  if (get_softmodem_params()->sa) {
+  if (get_softmodem_params()->sa && !IS_SOFTMODEM_NOS1) {
     rrc_gNB_send_NGAP_NAS_FIRST_REQ(ctxt_pP, ue_context_pP, rrcSetupComplete);
   } else {
     rrc_gNB_generate_SecurityModeCommand(ctxt_pP, ue_context_pP);
@@ -622,6 +626,33 @@ static void rrc_gNB_generate_defaultRRCReconfiguration(const protocol_ctxt_t *co
     dedicatedNAS_MessageList = NULL;
   }
 
+  // In noS1 mode, create a default DRB for user plane data
+  NR_DRB_ToAddModList_t *DRB_list = NULL;
+  uint8_t nos1_drb_id = 0;
+  if (IS_SOFTMODEM_NOS1 && ue_p->nb_of_pdusessions == 0) {
+    rrc_pdu_session_param_t *session = find_pduSession(ue_p, 10, true);
+    session->param.pdusession_id = 10;
+    session->param.nb_qos = 1;
+    session->param.qos[0].qfi = 9;
+    session->param.qos[0].fiveQI = 9;
+    session->status = PDU_SESSION_STATUS_NEW;
+    nos1_drb_id = next_available_drb(ue_p, session, NONGBR_FLOW);
+    generateDRB(ue_p, nos1_drb_id, session,
+                rrc->configuration.enable_sdap,
+                rrc->security.do_drb_integrity,
+                rrc->security.do_drb_ciphering);
+    DRB_list = createDRBlist(ue_p, false);
+    LOG_I(NR_RRC, "noS1: created default DRB %d for UE %04x\n", nos1_drb_id, ue_p->rnti);
+  }
+
+  // In noS1 mode, add DRB RLC bearer to masterCellGroup BEFORE do_RRCReconfiguration
+  // so that the RLC bearer is included in the encoded secondaryCellGroupConfig sent to UE
+  if (nos1_drb_id > 0 && ue_p->masterCellGroup && ue_p->masterCellGroup->rlc_BearerToAddModList) {
+    NR_RLC_BearerConfig_t *rlc_bearer = get_DRB_RLC_BearerConfig(3 + nos1_drb_id, nos1_drb_id, NR_RLC_Config_PR_um_Bi_Directional, 1);
+    asn1cSeqAdd(&ue_p->masterCellGroup->rlc_BearerToAddModList->list, rlc_bearer);
+    LOG_I(NR_RRC, "noS1: added RLC bearer for DRB %d (lcid %d) to masterCellGroup\n", nos1_drb_id, 3 + nos1_drb_id);
+  }
+
   NR_MeasConfig_t *measconfig = get_defaultMeasConfig(&rrc->configuration);
 
   uint8_t buffer[RRC_BUF_SIZE] = {0};
@@ -630,7 +661,7 @@ static void rrc_gNB_generate_defaultRRCReconfiguration(const protocol_ctxt_t *co
                                    RRC_BUF_SIZE,
                                    xid,
                                    NULL, //*SRB_configList2,
-                                   NULL, //*DRB_configList,
+                                   DRB_list,
                                    NULL,
                                    NULL,
                                    NULL,
@@ -641,6 +672,8 @@ static void rrc_gNB_generate_defaultRRCReconfiguration(const protocol_ctxt_t *co
                                    &rrc->configuration,
                                    NULL,
                                    ue_p->masterCellGroup);
+  freeDRBlist(DRB_list);
+
   AssertFatal(size > 0, "cannot encode RRCReconfiguration in %s()\n", __func__);
   LOG_W(NR_RRC, "do_RRCReconfiguration(): size %d\n", size);
 
@@ -673,6 +706,20 @@ static void rrc_gNB_generate_defaultRRCReconfiguration(const protocol_ctxt_t *co
   if (NODE_IS_DU(rrc->node_type) || NODE_IS_MONOLITHIC(rrc->node_type)) {
     gNB_RRC_UE_t *ue_p = &ue_context_pP->ue_context;
     nr_rrc_mac_update_cellgroup(ue_p->rnti, ue_p->masterCellGroup);
+    // Configure RLC/MAC for DRBs (needed for noS1 mode)
+    if (ue_p->masterCellGroup && ue_p->masterCellGroup->rlc_BearerToAddModList) {
+      NR_DRB_ToAddModList_t *DRBs = fill_DRB_configList(ue_p);
+      LOG_I(NR_RRC, "noS1 DRB: fill_DRB_configList returned %p, count=%d\n",
+            DRBs, DRBs ? DRBs->list.count : 0);
+      if (DRBs) {
+        nr_rrc_addmod_drbs(ctxt_pP->rntiMaybeUEid, DRBs, ue_p->masterCellGroup->rlc_BearerToAddModList);
+        freeDRBlist(DRBs);
+      }
+    } else {
+      LOG_W(NR_RRC, "noS1 DRB: masterCellGroup=%p, rlc_BearerToAddModList=%p\n",
+            (void*)ue_p->masterCellGroup,
+            ue_p->masterCellGroup ? (void*)ue_p->masterCellGroup->rlc_BearerToAddModList : NULL);
+    }
 
     uint32_t delay_ms = ue_p->masterCellGroup && ue_p->masterCellGroup->spCellConfig && ue_p->masterCellGroup->spCellConfig->spCellConfigDedicated
                                 && ue_p->masterCellGroup->spCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList
@@ -2634,7 +2681,7 @@ static void write_rrc_stats(const gNB_RRC_INST *rrc)
   }
 
   rrc_gNB_ue_context_t *ue_context_p = NULL;
-  /* cast is necessary to eliminate warning "discards â€˜constâ€™ qualifier" */
+  /* cast is necessary to eliminate warning "discards ¡®const¡¯ qualifier" */
   RB_FOREACH(ue_context_p, rrc_nr_ue_tree_s, &((gNB_RRC_INST *)rrc)->rrc_ue_head)
   {
     const gNB_RRC_UE_t *ue_ctxt = &ue_context_p->ue_context;

@@ -4649,8 +4649,8 @@ E-RABUsageReportItemIEs 	S1AP-PROTOCOL-IES ::= {
 E-RABUsageReportItem ::= SEQUENCE {
 	startTimestamp					OCTET STRING (SIZE(4)),
 	endTimestamp					OCTET STRING (SIZE(4)),
-	usageCountUL					INTEGER (0..18446744073709551615),
-	usageCountDL					INTEGER (0..18446744073709551615),
+	usageCountUL					INTEGER (0..9223372036854775807),
+	usageCountDL					INTEGER (0..9223372036854775807),
 	iE-Extensions				ProtocolExtensionContainer { { E-RABUsageReportItem-ExtIEs} } OPTIONAL,
 	...
 }

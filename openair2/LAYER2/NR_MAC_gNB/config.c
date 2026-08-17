@@ -390,13 +390,10 @@ static void config_common(gNB_MAC_INST *nrmac, int pdsch_AntennaPorts, int pusch
   if (cfg->cell_config.frame_duplex_type.value == TDD){
     cfg->tdd_table.tdd_period.tl.tag = NFAPI_NR_CONFIG_TDD_PERIOD_TAG;
     cfg->num_tlv++;
-    if (scc->tdd_UL_DL_ConfigurationCommon->pattern1.ext1 == NULL) {
-      cfg->tdd_table.tdd_period.value = scc->tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity;
-    } else {
-      AssertFatal(scc->tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530 != NULL,
-                  "In %s: scc->tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530 is null\n", __FUNCTION__);
-      cfg->tdd_table.tdd_period.value = *scc->tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530;
-    }
+    /* RISC-V port: the asn1c-oai generated NR_TDD_UL_DL_Pattern has no ext1
+     * extension container, so always use the base dl_UL_TransmissionPeriodicity
+     * (equivalent to the ext1 == NULL branch). */
+    cfg->tdd_table.tdd_period.value = scc->tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity;
     LOG_I(NR_MAC, "Setting TDD configuration period to %d\n", cfg->tdd_table.tdd_period.value);
     int periods_per_frame = set_tdd_config_nr(cfg,
                                               frequencyInfoUL->scs_SpecificCarrierList.list.array[0]->subcarrierSpacing,
@@ -645,7 +642,7 @@ bool nr_mac_update_cellgroup(gNB_MAC_INST *nrmac, uint32_t rnti, NR_CellGroupCon
   /* copy CellGroup by calling asn1c encode this is a temporary hack to avoid the gNB having a pointer to RRC CellGroup structure
    * (otherwise it would be applied to early)
    * TODO remove once we have a proper implementation */
-  UE->enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, NULL, (void *)CellGroup, UE->cg_buf, 32768);
+  UE->enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, (void *)CellGroup, UE->cg_buf, 32768);
 
   if (UE->enc_rval.encoded == -1) {
     LOG_E(NR_MAC, "ASN1 message CellGroupConfig encoding failed (%s, %lu)!\n", UE->enc_rval.failed_type->name, UE->enc_rval.encoded);

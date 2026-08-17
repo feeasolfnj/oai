@@ -31,6 +31,8 @@
 #include "X2AP_ProtocolExtensionField.h"
 #include "X2AP_ProtocolExtensionContainer.h"
 #include "X2AP_asn_constant.h"
+#include "X2AP_Cause.h"
+#include "X2AP_oai_compat.h"
 #include "intertask_interface.h"
 
 /** @defgroup _x2ap_impl_ X2AP Layer Reference Implementation

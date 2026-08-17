@@ -509,31 +509,31 @@ void nr_rrc_handle_SetupRelease_RLF_TimersAndConstants(NR_UE_RRC_INST_t *rrc,
         default :
           AssertFatal(false, "Invalid N311 %ld\n", rlf_tac->n311);
       }
-      if (rlf_tac->ext1) {
-        switch (rlf_tac->ext1->t311) {
-          case NR_RLF_TimersAndConstants__ext1__t311_ms1000 :
+      if (rlf_tac->t311) {
+        switch (*rlf_tac->t311) {
+          case NR_RLF_TimersAndConstants__t311_ms1000 :
             tac->T311_k = 1000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms3000 :
+          case NR_RLF_TimersAndConstants__t311_ms3000 :
             tac->T311_k = 3000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms5000 :
+          case NR_RLF_TimersAndConstants__t311_ms5000 :
             tac->T311_k = 5000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms10000 :
+          case NR_RLF_TimersAndConstants__t311_ms10000 :
             tac->T311_k = 10000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms15000 :
+          case NR_RLF_TimersAndConstants__t311_ms15000 :
             tac->T311_k = 15000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms20000 :
+          case NR_RLF_TimersAndConstants__t311_ms20000 :
             tac->T311_k = 20000;
             break;
-          case NR_RLF_TimersAndConstants__ext1__t311_ms30000 :
+          case NR_RLF_TimersAndConstants__t311_ms30000 :
             tac->T311_k = 30000;
             break;
           default :
-            AssertFatal(false, "Invalid T311 %ld\n", rlf_tac->ext1->t311);
+            AssertFatal(false, "Invalid T311 %ld\n", *rlf_tac->t311);
         }
       }
       reset_rlf_timers_and_constants(tac);

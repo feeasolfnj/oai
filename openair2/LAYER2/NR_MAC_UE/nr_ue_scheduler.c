@@ -47,6 +47,7 @@
 /* utils */
 #include "assertions.h"
 #include "oai_asn1.h"
+#include "NR_asn_constant.h"
 #include "SIMULATION/TOOLS/sim.h" // for taus
 #include "utils.h"
 
@@ -668,7 +669,7 @@ int nr_config_pusch_pdu(NR_UE_MAC_INST_t *mac,
       N_PRB_oh = 0;
 
     if (current_UL_BWP->pusch_servingcellconfig && current_UL_BWP->pusch_servingcellconfig->rateMatching) {
-      long *maxMIMO_Layers = current_UL_BWP->pusch_servingcellconfig->ext1->maxMIMO_Layers;
+      long *maxMIMO_Layers = current_UL_BWP->pusch_servingcellconfig->maxMIMO_Layers;
       if (!maxMIMO_Layers)
         maxMIMO_Layers = pusch_Config ? pusch_Config->maxRank : NULL;
       AssertFatal (maxMIMO_Layers != NULL,"Option with max MIMO layers not configured is not supported\n");
@@ -1000,6 +1001,7 @@ void nr_ue_ul_scheduler(nr_uplink_indication_t *ul_info)
     LOG_E(NR_MAC, "mac->ul_config is null!\n");
 
   if(mac->state < UE_CONNECTED) {
+    LOG_I(NR_MAC, "[%d.%d]: UE not connected, calling nr_ue_get_rach\n", frame_tx, slot_tx);
     nr_ue_get_rach(mod_id, cc_id, frame_tx, gNB_index, slot_tx);
     nr_ue_prach_scheduler(mod_id, frame_tx, slot_tx);
   }

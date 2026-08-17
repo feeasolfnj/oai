@@ -91,7 +91,7 @@ void generateDRB(gNB_RRC_UE_t *ue,
     if (do_drb_ciphering)
       est_drb->pdcp_config.ext1.cipheringDisabled = 1;
     else
-      est_drb->pdcp_config.ext1.cipheringDisabled = NR_PDCP_Config__ext1__cipheringDisabled_true;
+      est_drb->pdcp_config.ext1.cipheringDisabled = NR_PDCP_Config__cipheringDisabled_true;
   }
 }
 
@@ -135,9 +135,11 @@ NR_DRB_ToAddMod_t *generateDRB_ASN1(const drb_t *drb_asn1)
   if (!drb_asn1->pdcp_config.integrityProtection) {
     asn1cCallocOne(drb->integrityProtection, drb_asn1->pdcp_config.integrityProtection);
   }
+  /* drb_asn1->pdcp_config is OAI internal struct pdcp_config_s (has ext1).
+   * pdcpConfig is NR_PDCP_Config_t (asn1c flattens ext1.cipheringDisabled
+   * to a direct member). */
   if (!drb_asn1->pdcp_config.ext1.cipheringDisabled) {
-    asn1cCalloc(pdcpConfig->ext1, ext1);
-    asn1cCallocOne(ext1->cipheringDisabled, drb_asn1->pdcp_config.ext1.cipheringDisabled);
+    asn1cCallocOne(pdcpConfig->cipheringDisabled, drb_asn1->pdcp_config.ext1.cipheringDisabled);
   }
 
   return DRB_config;

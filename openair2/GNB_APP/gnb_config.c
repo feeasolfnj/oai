@@ -2034,7 +2034,6 @@ int RCconfig_NR_DU_F1(MessageDef *msg_p, uint32_t i) {
         NR_SIB1_t *bcch_SIB1 = bcch_message->message.choice.c1->choice.systemInformationBlockType1;
         f1Setup->sib1[k] = calloc(1,rrc->carrier.sizeof_SIB1);
         asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_SIB1,
-            NULL,
             (void *)bcch_SIB1,
             f1Setup->sib1[k],
             NR_MAX_SIB_LENGTH/8);
@@ -2134,7 +2133,7 @@ void du_extract_and_decode_SI(int inst, int si_ind, uint8_t *si_container, int s
         if (si->criticalExtensions.present == NR_SystemInformation__criticalExtensions_PR_systemInformation) {
           for (int i = 0; i < si->criticalExtensions.choice.systemInformation->sib_TypeAndInfo.list.count; i++) {
             LOG_I(GNB_APP, "Extracting SI %d/%d\n", i, si->criticalExtensions.choice.systemInformation->sib_TypeAndInfo.list.count);
-            SystemInformation_IEs__sib_TypeAndInfo__Member *typeAndInfo;
+            struct NR_SystemInformation_IEs__sib_TypeAndInfo__Member *typeAndInfo;
             typeAndInfo = si->criticalExtensions.choice.systemInformation->sib_TypeAndInfo.list.array[i];
 
             switch(typeAndInfo->present) {
@@ -2279,7 +2278,7 @@ int gNB_app_handle_f1ap_gnb_cu_configuration_update(f1ap_gnb_cu_configuration_up
   else {
     // generate gNB_CU_CONFIGURATION_UPDATE_FAILURE
     msg_ack_p = itti_alloc_new_message (TASK_GNB_APP, 0, F1AP_GNB_CU_CONFIGURATION_UPDATE_FAILURE);
-    F1AP_GNB_CU_CONFIGURATION_UPDATE_FAILURE(msg_ack_p).cause = F1AP_CauseRadioNetwork_cell_not_available;
+    F1AP_GNB_CU_CONFIGURATION_UPDATE_FAILURE(msg_ack_p).cause = CauseRadioNetwork_cell_not_available;
 
     itti_send_msg_to_task (TASK_DU_F1, INSTANCE_DEFAULT, msg_ack_p);
 

@@ -212,33 +212,31 @@ rrc_mac_config_req_ue(module_id_t Mod_idP,
       }
     }
 
-    if (mac_MainConfig->ext1
-        && mac_MainConfig->ext1->sr_ProhibitTimer_r9) {
+    if (mac_MainConfig->sr_ProhibitTimer_r9) {
       UE_mac_inst[Mod_idP].scheduling_info.sr_ProhibitTimer =
-        (uint16_t) * mac_MainConfig->ext1->sr_ProhibitTimer_r9;
+        (uint16_t) * mac_MainConfig->sr_ProhibitTimer_r9;
     } else {
       UE_mac_inst[Mod_idP].scheduling_info.sr_ProhibitTimer = 0;
     }
 
-    if (mac_MainConfig->ext2
-        && mac_MainConfig->ext2->mac_MainConfig_v1020) {
-      if (mac_MainConfig->ext2->
+    if (mac_MainConfig->mac_MainConfig_v1020) {
+      if (mac_MainConfig->
           mac_MainConfig_v1020->extendedBSR_Sizes_r10) {
         UE_mac_inst[Mod_idP].scheduling_info.
         extendedBSR_Sizes_r10 =
           (uint16_t) *
-          mac_MainConfig->ext2->
+          mac_MainConfig->
           mac_MainConfig_v1020->extendedBSR_Sizes_r10;
       } else {
         UE_mac_inst[Mod_idP].scheduling_info.
         extendedBSR_Sizes_r10 = (uint16_t) 0;
       }
 
-      if (mac_MainConfig->ext2->mac_MainConfig_v1020->
+      if (mac_MainConfig->mac_MainConfig_v1020->
           extendedPHR_r10) {
         UE_mac_inst[Mod_idP].scheduling_info.extendedPHR_r10 =
           (uint16_t) *
-          mac_MainConfig->ext2->mac_MainConfig_v1020->
+          mac_MainConfig->mac_MainConfig_v1020->
           extendedPHR_r10;
       } else {
         UE_mac_inst[Mod_idP].scheduling_info.extendedPHR_r10 =

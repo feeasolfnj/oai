@@ -608,10 +608,13 @@ static int rfsimulator_write_internal(rfsimulator_state_t *t, openair0_timestamp
 
   LOG_D(HW,"sending %d samples at time: %ld, nbAnt %d\n", nsamps, timestamp, nbAnt);
 
+  bool sent_to_client = false;
+  int active_clients = 0;
   for (int i=0; i<FD_SETSIZE; i++) {
     buffer_t *b=&t->buf[i];
 
     if (b->conn_sock >= 0 ) {
+      active_clients++;
       samplesBlockHeader_t header= {t->typeStamp, nsamps, nbAnt, timestamp};
       fullwrite(b->conn_sock,&header, sizeof(header), t);
       sample_t tmpSamples[nsamps][nbAnt];
@@ -625,9 +628,15 @@ static int rfsimulator_write_internal(rfsimulator_state_t *t, openair0_timestamp
 
       if (b->conn_sock >= 0 ) {
         fullwrite(b->conn_sock, (void *)tmpSamples, sampleToByte(nsamps,nbAnt), t);
+        sent_to_client = true;
       }
     }
   }
+
+  static int write_count = 0;
+  write_count++;
+  LOG_I(HW,"rfsim write[%d]: ts=%lu, nsamps=%d, nbAnt=%d, active_clients=%d, sent=%d, typeStamp=0x%lx\n",
+        write_count, timestamp, nsamps, nbAnt, active_clients, sent_to_client, t->typeStamp);
 
   if ( t->lastWroteTS != 0 && fabs((double)t->lastWroteTS-timestamp) > (double)CirSize)
     LOG_E(HW,"Discontinuous TX gap too large Tx:%lu, %lu\n", t->lastWroteTS, timestamp);
@@ -654,13 +663,21 @@ static bool flushInput(rfsimulator_state_t *t, int timeout, int nsamps_for_initi
   // Process all incoming events on sockets
   // store the data in lists
   struct epoll_event events[FD_SETSIZE]= {{0}};
+
+  // Check if epollfd is still valid
+  if (fcntl(t->epollfd, F_GETFL) == -1 && errno == EBADF) {
+    return false;
+  }
+
   int nfds = epoll_wait(t->epollfd, events, FD_SETSIZE, timeout);
 
   if ( nfds==-1 ) {
     if ( errno==EINTR || errno==EAGAIN ) {
       return false;
-    } else
-      AssertFatal(false,"error in epoll_wait\n");
+    } else {
+      LOG_E(HW,"error in epoll_wait: %d (%s)\n", errno, strerror(errno));
+      return false;
+    }
   }
 
   for (int nbEv = 0; nbEv < nfds; ++nbEv) {
@@ -722,8 +739,11 @@ static bool flushInput(rfsimulator_state_t *t, int timeout, int nsamps_for_initi
 
       // check the header and start block transfer
       if ( b->headerMode==true && b->remainToTransfer==0) {
-        AssertFatal( (t->typeStamp == UE_MAGICDL  && b->th.magic==ENB_MAGICDL) ||
-                     (t->typeStamp == ENB_MAGICDL && b->th.magic==UE_MAGICDL), "Socket Error in protocol");
+        if (!((t->typeStamp == UE_MAGICDL  && b->th.magic==ENB_MAGICDL) ||
+             (t->typeStamp == ENB_MAGICDL && b->th.magic==UE_MAGICDL))) {
+          LOG_E(HW,"Socket Error in protocol: typeStamp=0x%lx, magic=0x%lx\n", t->typeStamp, b->th.magic);
+          // Continue processing instead of crashing
+        }
         b->headerMode=false;
 
         if ( t->nextRxTstamp == 0 ) { // First block in UE, resync with the eNB current TS
@@ -800,7 +820,12 @@ static int rfsimulator_read(openair0_device *device, openair0_timestamp *ptimest
   }
 
   rfsimulator_state_t *t = device->priv;
-  LOG_D(HW, "Enter rfsimulator_read, expect %d samples, will release at TS: %ld, nbAnt %d\n", nsamps, t->nextRxTstamp+nsamps, nbAnt);
+  static int read_count = 0;
+  read_count++;
+  if (read_count <= 30 || read_count % 1000 == 0) {
+    LOG_I(HW,"rfsim read[%d]: expect %d samples at TS: %lu, nbAnt=%d, nextRxTstamp=%lu\n",
+          read_count, nsamps, t->nextRxTstamp+nsamps, nbAnt, t->nextRxTstamp);
+  }
   // deliver data from received data
   // check if a UE is connected
   int first_sock;
@@ -836,18 +861,19 @@ static int rfsimulator_read(openair0_device *device, openair0_timestamp *ptimest
       for ( int sock=0; sock<FD_SETSIZE; sock++) {
         buffer_t *b=&t->buf[sock];
 
-        if ( b->circularBuf )
+        if ( b->circularBuf ) {
+          if (read_count <= 10 || read_count % 1000 == 0) {
+            LOG_I(HW,"rfsim read[%d]: nextRxTstamp=%lu, lastReceivedTS=%lu, need=%lu\n",
+                  read_count, t->nextRxTstamp, b->lastReceivedTS, t->nextRxTstamp+nsamps);
+          }
           if ( t->nextRxTstamp+nsamps > b->lastReceivedTS ) {
             have_to_wait=true;
             break;
           }
+        }
       }
 
       if (have_to_wait)
-        /*printf("Waiting on socket, current last ts: %ld, expected at least : %ld\n",
-          ptr->lastReceivedTS,
-          t->nextRxTstamp+nsamps);
-        */
         flushInput(t, 3, nsamps);
     } while (have_to_wait);
   }

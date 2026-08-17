@@ -924,13 +924,13 @@ static uint8_t get_max_tpmi(const NR_PUSCH_Config_t *pusch_Config,
   }
 
   long max_rank = *pusch_Config->maxRank;
-  long *ul_FullPowerTransmission = pusch_Config->ext1 ? pusch_Config->ext1->ul_FullPowerTransmission_r16 : NULL;
+  long *ul_FullPowerTransmission = pusch_Config->ul_FullPowerTransmission_r16;
   long *codebookSubset = pusch_Config->codebookSubset;
 
   if (num_ue_srs_ports == 2) {
 
     if (max_rank == 1) {
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         max_tpmi = 2;
       } else {
         if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
@@ -940,7 +940,7 @@ static uint8_t get_max_tpmi(const NR_PUSCH_Config_t *pusch_Config,
         }
       }
     } else {
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         max_tpmi = *nrOfLayers == 1 ? 2 : 0;
       } else {
         if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
@@ -954,7 +954,7 @@ static uint8_t get_max_tpmi(const NR_PUSCH_Config_t *pusch_Config,
   } else if (num_ue_srs_ports == 4) {
 
     if (max_rank == 1) {
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
           max_tpmi = 3;
           *additional_max_tpmi = 13;
@@ -971,7 +971,7 @@ static uint8_t get_max_tpmi(const NR_PUSCH_Config_t *pusch_Config,
         }
       }
     } else {
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         if (max_rank == 2) {
           if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
             max_tpmi = *nrOfLayers == 1 ? 3 : 6;
@@ -2268,7 +2268,7 @@ void nr_schedule_ulsch(module_id_t module_id, frame_t frame, sub_frame_t slot, n
     if(current_BWP->pusch_servingcellconfig &&
        current_BWP->pusch_servingcellconfig->rateMatching) {
       // TBS_LBRM according to section 5.4.2.1 of 38.212
-      long *maxMIMO_Layers = current_BWP->pusch_servingcellconfig->ext1->maxMIMO_Layers;
+      long *maxMIMO_Layers = current_BWP->pusch_servingcellconfig->maxMIMO_Layers;
       if (!maxMIMO_Layers)
         maxMIMO_Layers = current_BWP->pusch_Config->maxRank;
       AssertFatal (maxMIMO_Layers != NULL,"Option with max MIMO layers not configured is not supported\n");
@@ -2293,7 +2293,7 @@ void nr_schedule_ulsch(module_id_t module_id, frame_t frame, sub_frame_t slot, n
       if ((!NR_DMRS_UplinkConfig ||
           !NR_DMRS_UplinkConfig->transformPrecodingEnabled ||
           (!NR_DMRS_UplinkConfig->transformPrecodingEnabled->sequenceGroupHopping && !NR_DMRS_UplinkConfig->transformPrecodingEnabled->sequenceHopping)) &&
-          !scc->uplinkConfigCommon->initialUplinkBWP->pusch_ConfigCommon->choice.setup->groupHoppingEnabledTransformPrecoding)
+          !((NR_SetupRelease_PUSCH_ConfigCommon_t *)scc->uplinkConfigCommon->initialUplinkBWP->pusch_ConfigCommon)->choice.setup->groupHoppingEnabledTransformPrecoding)
         pusch_pdu->dfts_ofdm.low_papr_sequence_number = 0;
       else
         AssertFatal(1==0,"Hopping mode is not supported in transform precoding\n");

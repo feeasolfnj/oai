@@ -63,7 +63,7 @@ void fill_default_reconfig(NR_ServingCellConfigCommon_t *servingcellconfigcommon
   reconfig->radioBearerConfig=NULL;
 
   char scg_buffer[1024];
-  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, NULL, (void *)secondaryCellGroup, scg_buffer, 1024);
+  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, (void *)secondaryCellGroup, scg_buffer, 1024);
   AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n", enc_rval.failed_type->name, enc_rval.encoded);
   reconfig->secondaryCellGroup = calloc(1,sizeof(*reconfig->secondaryCellGroup));
   OCTET_STRING_fromBuf(reconfig->secondaryCellGroup,

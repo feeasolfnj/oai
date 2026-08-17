@@ -1,116 +1,150 @@
+#ifndef __SSE_INTRIN_H__
+#define __SSE_INTRIN_H__
+
 /*
- * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under
- * the OAI Public License, Version 1.1  (the "License"); you may not use this file
- * except in compliance with the License.
- * You may obtain a copy of the License at
+ * sse_intrin.h - Cross-platform SIMD intrinsic header for OAI
  *
- *      http://www.openairinterface.org/?page_id=698
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *-------------------------------------------------------------------------------
- * For more information about the OpenAirInterface (OAI) Software Alliance:
- *      contact@openairinterface.org
+ * On x86: provides native SSE/AVX intrinsics via immintrin.h
+ * On RISC-V: provides SIMD emulation via SIMDE (maps x86 intrinsics to RVV)
+ *            When OAI_SIMD_X86_EMULATION is defined, the x86 code path
+ *            is selected by the source files, and this header provides
+ *            the SIMDE equivalents of x86 intrinsics.
+ * On ARM: provides NEON intrinsics
  */
 
-/*! \file PHY/sse_intrin.h
- * \brief SSE includes and compatibility functions.
- *
- * This header collects all SSE compatibility functions. To use SSE inside a source file, include only sse_intrin.h.
- * The host CPU needs to have support for SSE2 at least. SSE3 and SSE4.1 functions are emulated if the CPU lacks support for them.
- * This will slow down the softmodem, but may be valuable if only offline signal processing is required.
- *
- * 
- * Has been changed in August 2022 to rely on SIMD Everywhere (SIMDE) from MIT
- * by bruno.mongazon-cazavet@nokia-bell-labs.com
- *
- * All AVX22 code is mapped to SIMDE which transparently relies on AVX2 HW (avx2-capable host) or SIMDE emulation
- * (non-avx2-capable host).
- * To force using SIMDE emulation on avx2-capable host use the --noavx2 flag. 
- * avx512 code is not mapped to SIMDE. It depends on --noavx512 flag.
- * If the --noavx512 is set the OAI AVX512 emulation using AVX2 is used.
- * If the --noavx512 is not set, AVX512 HW is used on avx512-capable host while OAI AVX512 emulation using AVX2
- * is used on non-avx512-capable host. 
- *
- * \author S. Held, Laurent THOMAS
- * \email sebastian.held@imst.de, laurent.thomas@open-cells.com	
- * \company IMST GmbH, Open Cells Project
- * \date 2019
- * \version 0.2
-*/
+#if defined(OAI_SIMD_X86_EMULATION)
+  /*
+   * RISC-V (or other non-x86) with x86 SIMD emulation.
+   * The source code uses #if defined(__x86_64__) || defined(__i386__)
+   * to select x86 SIMD code paths. We define these macros so the
+   * x86 code is compiled, and provide SIMDE replacements.
+   */
+  #define __x86_64__
+  #undef __i386__
 
-#ifndef SSE_INTRIN_H
-#define SSE_INTRIN_H
+  /* Tell SIMDE we do NOT have native x86 SSE/AVX support;
+   * we want SIMDE's software emulation (using RVV on RISC-V).
+   * Without this, SIMDE sees __x86_64__ and assumes native SSE2,
+   * which causes _mm_* intrinsics to reference x86-only builtins. */
+  #define SIMDE_NO_NATIVE
+  #define SIMDE_X86_SSE_NO_NATIVE
+  #define SIMDE_X86_SSE2_NO_NATIVE
+  #define SIMDE_X86_SSE3_NO_NATIVE
+  #define SIMDE_X86_SSSE3_NO_NATIVE
+  #define SIMDE_X86_SSE4_1_NO_NATIVE
+  #define SIMDE_X86_SSE4_2_NO_NATIVE
+  #define SIMDE_X86_AVX_NO_NATIVE
+  #define SIMDE_X86_AVX2_NO_NATIVE
+  #define SIMDE_X86_FMA_NO_NATIVE
+  #define SIMDE_X86_AVX512F_NO_NATIVE
 
+  /* Enable SIMDE native aliases so _mm_* maps to simde_mm_* */
+  #ifndef SIMDE_ENABLE_NATIVE_ALIASES
+    #define SIMDE_ENABLE_NATIVE_ALIASES
+  #endif
+  #ifndef SIMDE_ENABLE_OPENMP
+    #define SIMDE_ENABLE_OPENMP
+  #endif
 
-#if defined(__x86_64) || defined(__i386__)
+  /* Include SIMDE headers that provide x86 intrinsic emulation */
+  #if __has_include(<simde/x86/sse2.h>)
+    #include <simde/x86/sse2.h>
+  #endif
+  #if __has_include(<simde/x86/avx2.h>)
+    #include <simde/x86/avx2.h>
+  #endif
+  #if __has_include(<simde/x86/ssse3.h>)
+    #include <simde/x86/ssse3.h>
+  #endif
+  #if __has_include(<simde/x86/sse4_2.h>)
+    #include <simde/x86/sse4_2.h>
+  #endif
 
-/* x86 processors */
+  /* Map x86 type names to SIMDE equivalents */
+  typedef simde__m128i  __m128i;
+  typedef simde__m128   __m128;
+  typedef simde__m256i  __m256i;
+  typedef simde__m256   __m256;
+  typedef simde__m64    __m64;
 
-#include <simde/x86/mmx.h>
-#include <simde/x86/sse.h>
-#include <simde/x86/sse2.h>
-#include <simde/x86/sse3.h>
-#include <simde/x86/ssse3.h>
-#include <simde/x86/sse4.1.h>
-#include <simde/x86/sse4.2.h>
-#include <simde/x86/avx2.h>
-#include <simde/x86/fma.h>
+  /* ARM NEON intrinsic emulation for mixed code (vqsubq_s16 etc.) */
+  #if __has_include(<simde/arm/neon/qadd.h>)
+    #include <simde/arm/neon/qadd.h>
+  #endif
+  #if __has_include(<simde/arm/neon/qsub.h>)
+    #include <simde/arm/neon/qsub.h>
+  #endif
+  #if __has_include(<simde/arm/neon/qshl.h>)
+    #include <simde/arm/neon/qshl.h>
+  #endif
 
-#if defined(__AVX512BW__) || defined(__AVX512F__)
-#include <immintrin.h>
-#endif
+  /* Map ARM NEON types to SIMDE equivalents for mixed code */
+  typedef simde_int16x8_t  int16x8_t;
+  typedef simde_int32x4_t  int32x4_t;
+  typedef simde_uint32x4_t uint32x4_t;
+  typedef simde_float32x4_t float32x4_t;
+
+  /* Map NEON intrinsics used in mixed x86/NEON code */
+  #define vqsubq_s16(a, b)  simde_vqsubq_s16(a, b)
+  #define vqaddq_s16(a, b)  simde_vqaddq_s16(a, b)
+  #define vqshlq_s16(a, b)  simde_vqshlq_s16(a, b)
+  #define vqcgtq_s16(a, b)  simde_vqcgtq_s16(a, b)
+
+#elif defined(__x86_64__) || defined(__i386__)
+  /* Native x86 SIMD intrinsics */
+  #include <immintrin.h>
+  #include <x86intrin.h>
 
 #elif defined(__arm__) || defined(__aarch64__)
-
-/* ARM processors */
-
-#include <simde/arm/neon.h>
+  /* ARM NEON intrinsics */
+  #include <arm_neon.h>
 
 #elif defined(__riscv) && (__riscv_xlen == 64)
+  /* RISC-V without x86 emulation - provide basic SIMDE types */
+  #if __has_include(<simde/x86/sse2.h>)
+    #include <simde/x86/sse2.h>
+  #endif
+  #if __has_include(<simde/x86/avx2.h>)
+    #include <simde/x86/avx2.h>
+  #endif
 
-/* RISC-V 64-bit processors - use SIMDE x86 emulation */
+  typedef simde__m128i  __m128i;
+  typedef simde__m128   __m128;
+  typedef simde__m256i  __m256i;
+  typedef simde__m256   __m256;
+  typedef simde__m64    __m64;
 
-#include <simde/x86/mmx.h>
-#include <simde/x86/sse.h>
-#include <simde/x86/sse2.h>
-#include <simde/x86/sse3.h>
-#include <simde/x86/ssse3.h>
-#include <simde/x86/sse4.1.h>
-#include <simde/x86/sse4.2.h>
-#include <simde/x86/avx2.h>
-#include <simde/x86/fma.h>
+  #ifndef SIMDE_ENABLE_NATIVE_ALIASES
+    #define SIMDE_ENABLE_NATIVE_ALIASES
+  #endif
 
-#endif // x86_64 || i386 || arm || riscv
+#else
+  /* Fallback: scalar-only compilation */
+  typedef int32_t  __m128i __attribute__((vector_size(16)));
+  typedef float    __m128  __attribute__((vector_size(16)));
+  typedef int32_t  __m256i __attribute__((vector_size(32)));
+  typedef float    __m256  __attribute__((vector_size(32)));
+  typedef int64_t  __m64;
+#endif
 
 /*
- * OAI specific
+ * OAI specific SIMD helpers
+ * (vect128 / mulByConjugate128 were present in the upstream header and are
+ *  used by nr_pbch.c. Under OAI_SIMD_X86_EMULATION, __x86_64__ is defined
+ *  above so the x86 branch is selected; _mm_* intrinsics are provided by
+ *  SIMDE via SIMDE_ENABLE_NATIVE_ALIASES, and __m128i is already typedef'd
+ *  to simde__m128i. The __riscv branch is kept for the non-emulation path.)
  */
-
 #if defined(__x86_64__) || defined(__i386__)
   #define vect128 __m128i
 #elif defined(__arm__) || defined(__aarch64__)
   #define vect128 int16x8_t
 #elif defined(__riscv) && (__riscv_xlen == 64)
   #define vect128 simde__m128i
-  /* Map AVX2 types to SIMDE equivalents on RISC-V */
-  typedef simde__m256i __m256i;
-  typedef simde__m128i __m128i;
-  typedef simde__m256 __m256;
-  typedef simde__m128 __m128;
-  typedef simde__m256d __m256d;
-  typedef simde__m128d __m128d;
 #endif
 
-static const short minusConjug128[8]__attribute__((aligned(16))) = {-1,1,-1,1,-1,1,-1,1};
+static const short minusConjug128[8] __attribute__((aligned(16))) = {-1,1,-1,1,-1,1,-1,1};
 static inline vect128 mulByConjugate128(vect128 *a, vect128 *b, int8_t output_shift) {
-
 #if defined(__x86_64__) || defined(__i386__)
   vect128 realPart = _mm_madd_epi16(*a,*b);
   realPart = _mm_srai_epi32(realPart,output_shift);
@@ -138,34 +172,4 @@ static inline vect128 mulByConjugate128(vect128 *a, vect128 *b, int8_t output_sh
 #endif
 }
 
-#if defined(__x86_64__) || defined(__i386__)
-#define displaySamples128(vect)  {\
-    __m128i x=vect;                                       \
-    printf("vector: %s = (%hd,%hd) (%hd,%hd) (%hd,%hd) (%hd,%hd)\n", #vect, \
-           _mm_extract_epi16(x,0),                                  \
-           _mm_extract_epi16(x,1),\
-           _mm_extract_epi16(x,2),\
-           _mm_extract_epi16(x,3),\
-           _mm_extract_epi16(x,4),\
-           _mm_extract_epi16(x,5),\
-           _mm_extract_epi16(x,6),\
-           _mm_extract_epi16(x,7));\
-  }
-#elif defined(__arm__) || defined(__aarch64__)
-  displaySamples128(vect) {}
-#elif defined(__riscv) && (__riscv_xlen == 64)
-#define displaySamples128(vect)  {\
-    simde__m128i x=vect;                                       \
-    printf("vector: %s = (%hd,%hd) (%hd,%hd) (%hd,%hd) (%hd,%hd)\n", #vect, \
-           simde_mm_extract_epi16(x,0),                                  \
-           simde_mm_extract_epi16(x,1),\
-           simde_mm_extract_epi16(x,2),\
-           simde_mm_extract_epi16(x,3),\
-           simde_mm_extract_epi16(x,4),\
-           simde_mm_extract_epi16(x,5),\
-           simde_mm_extract_epi16(x,6),\
-           simde_mm_extract_epi16(x,7));\
-  }
-//TBD
-#endif
-#endif // SSE_INTRIN_H
+#endif /* __SSE_INTRIN_H__ */

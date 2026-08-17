@@ -1200,12 +1200,12 @@ program_dlsch_acknak(module_id_t module_idP,
   int                                    use_simultaneous_pucch_pusch = 0;
   nfapi_ul_config_ulsch_harq_information *ulsch_harq_information      = NULL;
   nfapi_ul_config_harq_information       *harq_information            = NULL;
-  struct LTE_PhysicalConfigDedicated__ext2 *ext2 = UE_info->UE_template[CC_idP][UE_idP].physicalConfigDedicated->ext2;
+  LTE_PhysicalConfigDedicated_t *physicalConfigDedicated = UE_info->UE_template[CC_idP][UE_idP].physicalConfigDedicated;
 
-  if (ext2 &&
-      ext2->pucch_ConfigDedicated_v1020 &&
-      ext2->pucch_ConfigDedicated_v1020->simultaneousPUCCH_PUSCH_r10 &&
-      *ext2->pucch_ConfigDedicated_v1020->simultaneousPUCCH_PUSCH_r10 == LTE_PUCCH_ConfigDedicated_v1020__simultaneousPUCCH_PUSCH_r10_true)
+  if (physicalConfigDedicated &&
+      physicalConfigDedicated->pucch_ConfigDedicated_v1020 &&
+      physicalConfigDedicated->pucch_ConfigDedicated_v1020->simultaneousPUCCH_PUSCH_r10 &&
+      *physicalConfigDedicated->pucch_ConfigDedicated_v1020->simultaneousPUCCH_PUSCH_r10 == LTE_PUCCH_ConfigDedicated_v1020__simultaneousPUCCH_PUSCH_r10_true)
     use_simultaneous_pucch_pusch = 1;
 
   // pucch1 and pusch feedback is similar, namely in n+k subframes from now
@@ -1865,7 +1865,9 @@ mpdcch_sf_condition(eNB_MAC_INST *eNB,
                     int UE_id)
 //------------------------------------------------------------------------------
 {
-  struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = eNB->common_channels[CC_id].radioResourceConfigCommon_BR-> ext4->prach_ConfigCommon_v1310;
+  /* ext4 wrapper removed: prach_ConfigCommon_v1310 is a direct member of
+   * LTE_RadioResourceConfigCommonSIB_t (asn1c flattens ASN.1 extensions). */
+  struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = eNB->common_channels[CC_id].radioResourceConfigCommon_BR->prach_ConfigCommon_v1310;
   int T;
   LTE_EPDCCH_SetConfig_r11_t *epdcch_setconfig_r11;
 
@@ -1898,14 +1900,14 @@ mpdcch_sf_condition(eNB_MAC_INST *eNB,
       break;
 
     case TYPEUESPEC:
-      epdcch_setconfig_r11 = eNB->UE_info.UE_template[CC_id][UE_id].physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
+      epdcch_setconfig_r11 = eNB->UE_info.UE_template[CC_id][UE_id].physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
       AssertFatal(epdcch_setconfig_r11 != NULL, " epdcch_setconfig_r11 is null for UE specific \n");
-      AssertFatal(epdcch_setconfig_r11->ext2 != NULL, " ext2 doesn't exist in epdcch config ' \n");
+      AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, " ext2 doesn't exist in epdcch config ' \n");
 
       if (eNB->common_channels[CC_id].tdd_Config == NULL) //FDD
-        T = (rmax * startSF_fdd_RA_times2[epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_StartSF_UESS_r13.choice.fdd_r13]) >> 1;
+        T = (rmax * startSF_fdd_RA_times2[epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_StartSF_UESS_r13.choice.fdd_r13]) >> 1;
       else      //TDD
-        T = rmax * startSF_tdd_RA[epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_StartSF_UESS_r13.choice.tdd_r13];
+        T = rmax * startSF_tdd_RA[epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_StartSF_UESS_r13.choice.tdd_r13];
 
       break;
 
@@ -3912,9 +3914,9 @@ extract_harq(module_id_t mod_idP,
   LTE_PhysicalConfigDedicated_t *physicalConfigDedicated = UE_info->UE_template[pCCid][UE_id].physicalConfigDedicated;
 
   if (physicalConfigDedicated != NULL && physicalConfigDedicated->pucch_ConfigDedicated != NULL &&
-      physicalConfigDedicated->ext7 != NULL && physicalConfigDedicated->ext7->pucch_ConfigDedicated_r13 != NULL &&
-      ((physicalConfigDedicated->ext7->pucch_ConfigDedicated_r13->spatialBundlingPUCCH_r13 && format == 0) ||
-       (physicalConfigDedicated->ext7->pucch_ConfigDedicated_r13->spatialBundlingPUSCH_r13 && format == 1))) {
+      physicalConfigDedicated->pucch_ConfigDedicated_r13 != NULL &&
+      ((physicalConfigDedicated->pucch_ConfigDedicated_r13->spatialBundlingPUCCH_r13 && format == 0) ||
+       (physicalConfigDedicated->pucch_ConfigDedicated_r13->spatialBundlingPUSCH_r13 && format == 1))) {
     spatial_bundling = 1;
   }
 

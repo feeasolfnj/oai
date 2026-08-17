@@ -554,20 +554,26 @@ void schedule_nr_sib1(module_id_t module_idP,
 
     NR_Type0_PDCCH_CSS_config_t *type0_PDCCH_CSS_config = &gNB_mac->type0_PDCCH_CSS_config[i];
 
+    if (frameP < 4 && slotP == 0) {
+      LOG_I(NR_MAC,"[%d.%d] SIB1 check: i=%d, sfn_c=%d, n_0=%d, num_rbs=%d, active=%d\n",
+            frameP, slotP, i, type0_PDCCH_CSS_config->sfn_c, type0_PDCCH_CSS_config->n_0,
+            type0_PDCCH_CSS_config->num_rbs, type0_PDCCH_CSS_config->active);
+    }
+
     if((frameP%2 == type0_PDCCH_CSS_config->sfn_c) &&
        (slotP == type0_PDCCH_CSS_config->n_0) &&
        (type0_PDCCH_CSS_config->num_rbs > 0) &&
        (type0_PDCCH_CSS_config->active == true)) {
 
-      LOG_D(NR_MAC,"(%d.%d) SIB1 transmission: ssb_index %d\n", frameP, slotP, type0_PDCCH_CSS_config->ssb_index);
+      LOG_I(NR_MAC,"(%d.%d) SIB1 transmission: ssb_index %d\n", frameP, slotP, type0_PDCCH_CSS_config->ssb_index);
 
       // Get SIB1
       uint8_t sib1_payload[NR_MAX_SIB_LENGTH/8];
       uint16_t sib1_sdu_length = mac_rrc_nr_data_req(module_idP, CC_id, frameP, BCCH, SI_RNTI, 1, sib1_payload);
-      LOG_D(NR_MAC,"sib1_sdu_length = %i\n", sib1_sdu_length);
-      LOG_D(NR_MAC,"SIB1: \n");
+      LOG_I(NR_MAC,"sib1_sdu_length = %i\n", sib1_sdu_length);
+      LOG_I(NR_MAC,"SIB1: \n");
       for (int k=0;k<sib1_sdu_length;k++)
-        LOG_D(NR_MAC,"byte %d : %x\n",k,((uint8_t*)sib1_payload)[k]);
+        LOG_I(NR_MAC,"byte %d : %x\n",k,((uint8_t*)sib1_payload)[k]);
 
       default_table_type_t table_type = get_default_table_type(type0_PDCCH_CSS_config->type0_pdcch_ss_mux_pattern);
       // assuming normal CP

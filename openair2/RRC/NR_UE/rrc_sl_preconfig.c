@@ -158,24 +158,24 @@ static void prepare_NR_SL_ResourcePool(NR_SL_ResourcePool_r16_t *sl_res_pool,
   sl_res_pool->sl_TxPercentageList_r16 = NULL;
   sl_res_pool->sl_MinMaxMCS_List_r16 = NULL;
 
-  sl_res_pool->ext1 = calloc(1, sizeof(*sl_res_pool->ext1));
-  sl_res_pool->ext1->sl_TimeResource_r16 = calloc(1, sizeof(*sl_res_pool->ext1->sl_TimeResource_r16));
-  sl_res_pool->ext1->sl_TimeResource_r16->size = 8;
-  sl_res_pool->ext1->sl_TimeResource_r16->bits_unused = 4;
-  sl_res_pool->ext1->sl_TimeResource_r16->buf = calloc(sl_res_pool->ext1->sl_TimeResource_r16->size, sizeof(uint8_t));
+  /* NR_SL_ResourcePool_r16 has no ext1 wrapper (sl_TimeResource_r16 etc. are direct members). */
+  sl_res_pool->sl_TimeResource_r16 = calloc(1, sizeof(*sl_res_pool->sl_TimeResource_r16));
+  sl_res_pool->sl_TimeResource_r16->size = 8;
+  sl_res_pool->sl_TimeResource_r16->bits_unused = 4;
+  sl_res_pool->sl_TimeResource_r16->buf = calloc(sl_res_pool->sl_TimeResource_r16->size, sizeof(uint8_t));
   // EX: BITMAP 10101010.. indicating every alternating slot supported for sidelink
-  for (int i=0;i<sl_res_pool->ext1->sl_TimeResource_r16->size;i++) {
+  for (int i=0;i<sl_res_pool->sl_TimeResource_r16->size;i++) {
     if (is_txpool) {
-        sl_res_pool->ext1->sl_TimeResource_r16->buf[i] = (is_sl_syncsource) ? 0xAA //0x88;//0xAA;
+        sl_res_pool->sl_TimeResource_r16->buf[i] = (is_sl_syncsource) ? 0xAA //0x88;//0xAA;
                                                                             : 0x55;//0x11;//0x55;
     } else {
-        sl_res_pool->ext1->sl_TimeResource_r16->buf[i] = (is_sl_syncsource) ? 0x55 //0x88;//0xAA;
+        sl_res_pool->sl_TimeResource_r16->buf[i] = (is_sl_syncsource) ? 0x55 //0x88;//0xAA;
                                                                             : 0xAA;//0x11;//0x55;
     }
   }
 
   // mask out unused bits
-  sl_res_pool->ext1->sl_TimeResource_r16->buf[sl_res_pool->ext1->sl_TimeResource_r16->size - 1] &= (0 - (1 << (sl_res_pool->ext1->sl_TimeResource_r16->bits_unused)));
+  sl_res_pool->sl_TimeResource_r16->buf[sl_res_pool->sl_TimeResource_r16->size - 1] &= (0 - (1 << (sl_res_pool->sl_TimeResource_r16->bits_unused)));
 
   char aprefix[MAX_OPTNAME_SIZE*2 + 8];
   paramdef_t SL_POOLPARAMS[] = SL_RESPOOLPARAMS_DESC(sl_res_pool);
@@ -368,7 +368,7 @@ NR_SL_PreconfigurationNR_r16_t *prepare_NR_SL_PRECONFIGURATION(uint16_t num_tx_p
   sl_preconfig->sl_PreconfigGeneral_r16 = calloc(1, sizeof(NR_SL_PreconfigGeneral_r16_t));
   sl_preconfig->sl_PreconfigGeneral_r16->sl_TDD_Configuration_r16 = calloc(1, sizeof(NR_TDD_UL_DL_ConfigCommon_t));
   NR_TDD_UL_DL_ConfigCommon_t *tdd_uldl_cfg = sl_preconfig->sl_PreconfigGeneral_r16->sl_TDD_Configuration_r16;
-  tdd_uldl_cfg->pattern1.ext1 = NULL;
+  /* NR_TDD_UL_DL_Pattern has no ext1 wrapper; pattern1 extension fields are direct members. */
   tdd_uldl_cfg->pattern2 = NULL;
 
   char aprefix[MAX_OPTNAME_SIZE*2 + 8];

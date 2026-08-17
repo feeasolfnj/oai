@@ -35,12 +35,12 @@
 extern int opp_enabled;
 extern double cpu_freq_GHz  __attribute__ ((aligned(32)));;
 // structure to store data to compute cpu measurment
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__riscv) && (__riscv_xlen == 64)
+  typedef uint64_t oai_cputime_t;
+#elif defined(__x86_64__) || defined(__i386__)
   typedef long long oai_cputime_t;
 #elif defined(__arm__) || defined(__aarch64__)
   typedef uint32_t oai_cputime_t;
-#elif defined(__riscv) && (__riscv_xlen == 64)
-  typedef uint64_t oai_cputime_t;
 #else
   #error "building on unsupported CPU architecture"
 #endif
@@ -94,7 +94,14 @@ size_t print_meas_log(time_stats_t *ts,
 double get_time_meas_us(time_stats_t *ts);
 double get_cpu_freq_GHz(void);
 
-#if defined(__i386__)
+#if defined(__riscv) && (__riscv_xlen == 64)
+static inline uint64_t rdtsc_oai(void) __attribute__((always_inline));
+static inline uint64_t rdtsc_oai(void) {
+  uint64_t r;
+  asm volatile("rdcycle %0" : "=r"(r));
+  return r;
+}
+#elif defined(__i386__)
 static inline unsigned long long rdtsc_oai(void) __attribute__((always_inline));
 static inline unsigned long long rdtsc_oai(void) {
   unsigned long long int x;
@@ -114,13 +121,6 @@ static inline uint32_t rdtsc_oai(void) __attribute__((always_inline));
 static inline uint32_t rdtsc_oai(void) {
   uint32_t r = 0;
   asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r"(r) );
-  return r;
-}
-#elif defined(__riscv) && (__riscv_xlen == 64)
-static inline uint64_t rdtsc_oai(void) __attribute__((always_inline));
-static inline uint64_t rdtsc_oai(void) {
-  uint64_t r;
-  asm volatile("rdcycle %0" : "=r"(r));
   return r;
 }
 #endif

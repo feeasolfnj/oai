@@ -742,16 +742,19 @@ void check_and_process_dci(nfapi_nr_dl_tti_request_t *dl_tti_request,
     int slots_per_frame = 20; //30 kHZ subcarrier spacing
     int slot_ahead = 2; // TODO: Make this dynamic
 
-    if (is_nr_UL_slot(mac->tdd_UL_DL_ConfigurationCommon,
+    int is_ul = is_nr_UL_slot(mac->tdd_UL_DL_ConfigurationCommon,
                       (slot + slot_ahead) % slots_per_frame,
-                      mac->frame_type)
-        && mac->ra.ra_state != RA_SUCCEEDED) {
+                      mac->frame_type);
+    LOG_I(NR_MAC, "[%d.%d]: is_UL_slot=%d, ra_state=%d\n", slot, (slot + slot_ahead) % slots_per_frame, is_ul, mac->ra.ra_state);
+
+    if (is_ul && mac->ra.ra_state != RA_SUCCEEDED) {
       // If we filled dl_info AFTER we got the slot indication, we want to check if we should fill tx_req:
       nr_uplink_indication_t ul_info = {
             .frame_rx = frame,
             .slot_rx = slot,
             .slot_tx = (slot + slot_ahead) % slots_per_frame,
             .frame_tx = (ul_info.slot_rx + slot_ahead >= slots_per_frame) ? ul_info.frame_rx + 1 : ul_info.frame_rx};
+      LOG_I(NR_MAC, "[%d.%d]: Calling nr_ue_ul_scheduler\n", frame, slot);
       nr_ue_ul_scheduler(&ul_info);
     }
 }
@@ -958,6 +961,7 @@ void *nrue_standalone_pnf_task(void *context)
 
   LOG_I(NR_RRC, "Successfully started %s.\n", __FUNCTION__);
 
+  int msg_count = 0;
   while (true)
   {
     ssize_t len = recvfrom(sd, buffer, sizeof(buffer), MSG_TRUNC, (struct sockaddr *)&server_address, &addr_len);
@@ -965,6 +969,10 @@ void *nrue_standalone_pnf_task(void *context)
     {
       LOG_E(NR_PHY, "reading from standalone pnf sctp socket failed \n");
       continue;
+    }
+    msg_count++;
+    if (msg_count % 100 == 0) {
+      LOG_I(NR_PHY, "Received %d messages from proxy, len=%zd\n", msg_count, len);
     }
     if (len > sizeof(buffer))
     {

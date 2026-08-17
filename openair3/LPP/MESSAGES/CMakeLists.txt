@@ -17,4 +17,6 @@ add_custom_command(OUTPUT ${lpp_source} ${lpp_headers}
 
 add_library(asn1_lpp ${lpp_source})
 target_include_directories(asn1_lpp PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+# LPP has cross-module dependencies on NGAP types (e.g., NGAP_UTCTime)
+target_include_directories(asn1_lpp PUBLIC "${CMAKE_BINARY_DIR}/openair3/NGAP/MESSAGES")
 target_compile_options(asn1_lpp PRIVATE -DASN_DISABLE_OER_SUPPORT -w)

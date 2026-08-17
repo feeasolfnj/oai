@@ -373,12 +373,11 @@ schedule_SR (module_id_t module_idP,
             is_harq);
 
       /* Check Rel10 or Rel8 SR */
-      if ((UE_info-> UE_template[CC_id][UE_id].physicalConfigDedicated->ext2) &&
-          (UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->ext2->schedulingRequestConfig_v1020) &&
-          (UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->ext2->schedulingRequestConfig_v1020)) {
+      if ((UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig_v1020) &&
+          (UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig_v1020)) {
         sr.sr_information_rel10.tl.tag                    = NFAPI_UL_CONFIG_REQUEST_SR_INFORMATION_REL10_TAG;
         sr.sr_information_rel10.number_of_pucch_resources = 1;
-        sr.sr_information_rel10.pucch_index_p1            = *UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->ext2->schedulingRequestConfig_v1020->sr_PUCCH_ResourceIndexP1_r10;
+        sr.sr_information_rel10.pucch_index_p1            = *UE_info->UE_template[CC_id][UE_id].physicalConfigDedicated->schedulingRequestConfig_v1020->sr_PUCCH_ResourceIndexP1_r10;
         LOG_D(MAC, "REL10 PUCCH INDEX P1:%d \n", sr.sr_information_rel10.pucch_index_p1);
       } else {
         sr.sr_information_rel8.tl.tag      = NFAPI_UL_CONFIG_REQUEST_SR_INFORMATION_REL8_TAG;

@@ -149,6 +149,10 @@ elseif(${CPUARCH} STREQUAL "riscv64")
   # Instead, let SIMDE use its software emulation layer.
   # SIMDE_ENABLE_NATIVE_ALIASES maps _mm_* to simde_mm_* functions,
   # allowing x86 intrinsic code to compile on RISC-V.
+  # OAI_SIMD_X86_EMULATION triggers sse_intrin.h to provide x86 type
+  # mappings (e.g., __m128i -> simde__m128i) and define __x86_64__
+  # so that existing x86 code paths are selected.
+  set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -DOAI_SIMD_X86_EMULATION")
   set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -DSIMDE_ENABLE_NATIVE_ALIASES")
   set(C_FLAGS_PROCESSOR "${C_FLAGS_PROCESSOR} -march=rv64gcv -mabi=lp64d")
 elseif(${CPUARCH} STREQUAL "aarch64" OR ${CPUARCH} STREQUAL "armv7l")
@@ -167,6 +171,12 @@ set(commonOpts "-pipe -fPIC -Wall -fno-strict-aliasing")
 # Add SIMDE include path (for SIMD emulation on non-x86 architectures)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/extra/simde")
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/extra/simde)
+endif()
+
+# Add RISC-V cross-compiled library paths (libconfig etc.)
+if(${CPUARCH} STREQUAL "riscv64" AND EXISTS "/home/kongbai/riscv-libs")
+  include_directories("/home/kongbai/riscv-libs/include")
+  link_directories("/home/kongbai/riscv-libs/lib")
 endif()
 # GNU C/C++ Compiler might throw many warnings without packed-bitfield-compat, see man page
 # also, we need -rdynamic to incorporate all symbols in shared objects, again, see man page
@@ -661,7 +671,18 @@ set(SECURITY_SRC
   ${OPENAIR3_DIR}/SECU/nas_stream_eia2.c
   )
 
-pkg_check_modules(OpenSSL openssl REQUIRED)
+# RISC-V cross-compilation: use OpenSSL stubs
+if(CMAKE_CROSSCOMPILING AND CMAKE_SYSTEM_PROCESSOR STREQUAL "riscv64")
+  # Build the OpenSSL stubs library
+  add_subdirectory(cmake_targets/riscv64-stubs ${CMAKE_BINARY_DIR}/riscv64-stubs)
+  set(OpenSSL_LIBRARIES ssl_stubs)
+  set(OPENSSL_LIBRARIES ssl_stubs)
+  set(OpenSSL_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/cmake_targets/riscv64-stubs/include")
+  set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/cmake_targets/riscv64-stubs/include")
+  set(OpenSSL_CFLAGS "-I${CMAKE_SOURCE_DIR}/cmake_targets/riscv64-stubs/include")
+else()
+  pkg_check_modules(OpenSSL openssl REQUIRED)
+endif()
 add_library(SECURITY ${SECURITY_SRC} $<TARGET_OBJECTS:ds>)
 target_include_directories(SECURITY PRIVATE ${OPENAIR_DIR}/common/utils/ds/)
 target_link_libraries(SECURITY PRIVATE ${OpenSSL_LIBRARIES})

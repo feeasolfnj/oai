@@ -335,7 +335,6 @@ void rrc_add_nsa_user(gNB_RRC_INST *rrc, rrc_gNB_ue_context_t *ue_context_p, x2a
     //X2AP_ENDC_SGNB_ADDITION_REQ_ACK(msg).rrc_buffer_size = CG_Config_size; //Need to verify correct value for the buffer_size
     // Send to X2 entity to transport to MeNB
     asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CG_Config,
-                              NULL,
                               (void *)CG_Config,
                               X2AP_ENDC_SGNB_ADDITION_REQ_ACK(msg).rrc_buffer,
                               sizeof(X2AP_ENDC_SGNB_ADDITION_REQ_ACK(msg).rrc_buffer));

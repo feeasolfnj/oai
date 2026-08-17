@@ -414,6 +414,7 @@ static void *enb_tun_read_thread(void *_)
 
   int rb_id = 1;
   pthread_setname_np( pthread_self(),"enb_tun_read");
+  LOG_I(PDCP, "enb_tun_read_thread started, fd=%d\n", nas_sock_fd[0]);
 
   while (1) {
     len = read(nas_sock_fd[0], &rx_buf, NL_MAX_PAYLOAD);
@@ -422,12 +423,13 @@ static void *enb_tun_read_thread(void *_)
       exit(1);
     }
 
-    LOG_D(PDCP, "%s(): nas_sock_fd read returns len %d\n", __func__, len);
+    LOG_I(PDCP, "enb_tun_read: read %d bytes from TUN\n", len);
 
     nr_pdcp_manager_lock(nr_pdcp_ue_manager);
     const bool has_ue = nr_pdcp_get_first_ue_id(nr_pdcp_ue_manager, &rntiMaybeUEid);
     nr_pdcp_manager_unlock(nr_pdcp_ue_manager);
 
+    LOG_I(PDCP, "enb_tun_read: has_ue=%d, ue_id=%lx\n", has_ue, (unsigned long)rntiMaybeUEid);
     if (!has_ue) continue;
 
     ctxt.module_id = 0;
@@ -439,11 +441,13 @@ static void *enb_tun_read_thread(void *_)
     ctxt.brOption = 0;
     ctxt.rntiMaybeUEid = rntiMaybeUEid;
 
-    uint8_t qfi = 7;
+    uint8_t qfi = 9;
     bool rqi = 0;
     int pdusession_id = 10;
 
-    sdap_data_req(&ctxt, rntiMaybeUEid, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED, RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf, PDCP_TRANSMISSION_MODE_DATA, NULL, NULL, qfi, rqi, pdusession_id);
+    bool sdap_ret = sdap_data_req(&ctxt, rntiMaybeUEid, SRB_FLAG_NO, rb_id, RLC_MUI_UNDEFINED, RLC_SDU_CONFIRM_NO, len, (unsigned char *)rx_buf, PDCP_TRANSMISSION_MODE_DATA, NULL, NULL, qfi, rqi, pdusession_id);
+    LOG_I(PDCP, "enb_tun_read: sdap_data_req returned %d (ue_id=%lx, rb_id=%d, qfi=%d, pdusession=%d)\n",
+          sdap_ret, (unsigned long)rntiMaybeUEid, rb_id, qfi, pdusession_id);
   }
 
   return NULL;
@@ -631,7 +635,7 @@ static void deliver_sdu_drb(void *_ue, nr_pdcp_entity_t *entity,
   int i;
 
   if (IS_SOFTMODEM_NOS1 || UE_NAS_USE_TUN) {
-    LOG_D(PDCP, "IP packet received with size %d, to be sent to SDAP interface, UE ID/RNTI: %ld\n", size, ue->rntiMaybeUEid);
+    LOG_I(PDCP, "deliver_sdu_drb: IP packet received size %d, UE ID/RNTI: %ld, is_gnb=%d, rb_id=%ld\n", size, ue->rntiMaybeUEid, entity->is_gnb, entity->rb_id);
     sdap_data_ind(entity->rb_id, entity->is_gnb, entity->has_sdap_rx, entity->pdusession_id, ue->rntiMaybeUEid, buf, size);
   }
   else{
@@ -681,7 +685,7 @@ static void deliver_pdu_drb(void *deliver_pdu_data, ue_id_t ue_id, int rb_id,
   } else {
     mem_block_t *memblock = get_free_mem_block(size, __FUNCTION__);
     memcpy(memblock->data, buf, size);
-    LOG_D(PDCP, "%s(): (drb %d) calling rlc_data_req size %d\n", __func__, rb_id, size);
+    LOG_I(PDCP, "%s(): (drb %d) calling rlc_data_req size %d (ue_id=%lx)\n", __func__, rb_id, size, (unsigned long)ue_id);
     //for (i = 0; i < size; i++) printf(" %2.2x", (unsigned char)memblock->data[i]);
     //printf("\n");
     enqueue_rlc_data_req(&ctxt, 0, MBMS_FLAG_NO, rb_id, sdu_id, 0, size, memblock);
@@ -809,8 +813,7 @@ void add_drb_am(int is_gnb, ue_id_t rntiMaybeUEid, ue_id_t reestablish_ue_id, st
   else
     has_integrity = 0;
 
-  if (s->pdcp_Config->ext1 != NULL
-     && s->pdcp_Config->ext1->cipheringDisabled != NULL)
+  if (s->pdcp_Config->cipheringDisabled != NULL)
     has_ciphering = 0;
   else
     has_ciphering = 1;

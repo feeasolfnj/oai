@@ -2926,8 +2926,8 @@ DRB-Usage-Report-List ::= SEQUENCE (SIZE(1..maxnooftimeperiods)) OF DRB-Usage-Re
 DRB-Usage-Report-Item	::= SEQUENCE {
 	startTimeStamp					OCTET STRING (SIZE(4)),
 	endTimeStamp					OCTET STRING (SIZE(4)),
-	usageCountUL					INTEGER (0..18446744073709551615),
-	usageCountDL					INTEGER (0..18446744073709551615),
+	usageCountUL					INTEGER (0..9223372036854775807),
+	usageCountDL					INTEGER (0..9223372036854775807),
 	iE-Extensions					ProtocolExtensionContainer { { DRB-Usage-Report-Item-ExtIEs} } OPTIONAL,
 	...
 }
@@ -3362,8 +3362,8 @@ MaxCIDEHCDL ::= INTEGER (1..32767, ...)
 MRDC-Data-Usage-Report-Item ::= SEQUENCE {
 	startTimeStamp				OCTET STRING (SIZE(4)),
 	endTimeStamp				OCTET STRING (SIZE(4)),
-	usageCountUL				INTEGER (0..18446744073709551615),
-	usageCountDL				INTEGER (0..18446744073709551615),
+	usageCountUL				INTEGER (0..9223372036854775807),
+	usageCountDL				INTEGER (0..9223372036854775807),
 	iE-Extensions				ProtocolExtensionContainer { { MRDC-Data-Usage-Report-Item-ExtIEs} } OPTIONAL,
 ...
 }

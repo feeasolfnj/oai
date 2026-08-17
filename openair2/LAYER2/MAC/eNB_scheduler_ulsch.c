@@ -2160,21 +2160,21 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
             /* save it for a potential retransmission */
             UE_template->cshift[harq_pid] = cshift;
             AssertFatal (UE_template->physicalConfigDedicated != NULL, "UE_template->physicalConfigDedicated is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4 != NULL, "UE_template->physicalConfigDedicated->ext4 is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11 is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.present == LTE_EPDCCH_Config_r11__config_r11_PR_setup,
-                         "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.present != setup\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 != NULL,
-                         "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 = NULL\n");
-            LTE_EPDCCH_SetConfig_r11_t *epdcch_setconfig_r11 = UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->ext4 is null\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->epdcch_Config_r11 is null\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.present == LTE_EPDCCH_Config_r11__config_r11_PR_setup,
+                         "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.present != setup\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 != NULL,
+                         "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 = NULL\n");
+            LTE_EPDCCH_SetConfig_r11_t *epdcch_setconfig_r11 = UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
             AssertFatal(epdcch_setconfig_r11 != NULL, "epdcch_setconfig_r11 is null\n");
-            AssertFatal(epdcch_setconfig_r11->ext2 != NULL, "epdcch_setconfig_r11->ext2 is null\n");
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->ext2->mpdcch_config_r13 is null");
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13->present == LTE_EPDCCH_SetConfig_r11__ext2__mpdcch_config_r13_PR_setup,
-                        "epdcch_setconfig_r11->ext2->mpdcch_config_r13->present is not setup\n");
-            AssertFatal(epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310 != NULL, "epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310 is null");
-            AssertFatal(epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310->present == LTE_EPDCCH_SetConfig_r11__ext2__numberPRB_Pairs_v1310_PR_setup,
-                        "epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310->present is not setup\n");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->ext2 is null\n");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->mpdcch_config_r13 is null");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13->present == LTE_EPDCCH_SetConfig_r11__mpdcch_config_r13_PR_setup,
+                        "epdcch_setconfig_r11->mpdcch_config_r13->present is not setup\n");
+            AssertFatal(epdcch_setconfig_r11->numberPRB_Pairs_v1310 != NULL, "epdcch_setconfig_r11->numberPRB_Pairs_v1310 is null");
+            AssertFatal(epdcch_setconfig_r11->numberPRB_Pairs_v1310->present == LTE_EPDCCH_SetConfig_r11__numberPRB_Pairs_v1310_PR_setup,
+                        "epdcch_setconfig_r11->numberPRB_Pairs_v1310->present is not setup\n");
             LOG_D(MAC,"[PUSCH %d] Frame %d, Subframe %d: Adding UL 6-0A MPDCCH for BL/CE UE %d/%x, ulsch_frame %d, ulsch_subframe %d, UESS MPDCCH Narrowband %d\n",
                   harq_pid,
                   frameP,
@@ -2183,21 +2183,21 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
                   rnti,
                   sched_frame,
                   sched_subframeP,
-                  (int)epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
-            UE_template->first_rb_ul[harq_pid] = narrowband_to_first_rb (cc, epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
+                  (int)epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
+            UE_template->first_rb_ul[harq_pid] = narrowband_to_first_rb (cc, epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
             hi_dci0_pdu = &(hi_dci0_req->hi_dci0_pdu_list[hi_dci0_req->number_of_dci + hi_dci0_req->number_of_hi]);
             memset((void *) hi_dci0_pdu, 0, sizeof(nfapi_hi_dci0_request_pdu_t));
             hi_dci0_pdu->pdu_type = NFAPI_HI_DCI0_MPDCCH_DCI_PDU_TYPE;
             hi_dci0_pdu->pdu_size = (uint8_t) (2 + sizeof (nfapi_dl_config_mpdcch_pdu));
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.dci_format = (UE_template->rach_resource_type > 1) ? 5 : 4;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.ce_mode = (UE_template->rach_resource_type > 1) ? 2 : 1;
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_narrowband = epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1;
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_narrowband = epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.number_of_prb_pairs = 6;       // checked above that it has to be this
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.resource_block_assignment = 0; // Note: this can be dynamic
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_transmission_type = epdcch_setconfig_r11->transmissionType_r11;  // distibuted
-            AssertFatal(UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 != NULL,
-                        "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 is null\n");
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.start_symbol = *UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11;
+            AssertFatal(UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 != NULL,
+                        "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 is null\n");
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.start_symbol = *UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.ecce_index = 0;        // Note: this should be dynamic
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.aggreagation_level = 24;        // OK for CEModeA r1-3 (9.1.5-1b) or CEModeB r1-4
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.rnti_type = 4; // other
@@ -2210,9 +2210,9 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.number_of_resource_blocks = 6;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mcs = 4;       // adjust according to size of RAR, 208 bits with N1A_PRB = 3
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.pusch_repetition_levels = UE_template->pusch_repetition_levels;
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13 == LTE_EPDCCH_SetConfig_r11__ext2__mpdcch_config_r13__setup__mpdcch_pdsch_HoppingConfig_r13_off,
-                        "epdcch_setconfig_r11->ext2->mpdcch_config_r13->mpdcch_pdsch_HoppingConfig_r13 is not off\n");
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.frequency_hopping_flag = 1 - epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13;
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13 == LTE_EPDCCH_SetConfig_r11__mpdcch_config_r13__setup__mpdcch_pdsch_HoppingConfig_r13_off,
+                        "epdcch_setconfig_r11->mpdcch_config_r13->mpdcch_pdsch_HoppingConfig_r13 is not off\n");
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.frequency_hopping_flag = 1 - epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.redudency_version = 0;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.new_data_indication = UE_template->oldNDI_UL[harq_pid];
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.harq_process = 0;
@@ -2235,7 +2235,7 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
                   rnti,
                   sched_frame,
                   sched_subframeP,
-                  (int)epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
+                  (int)epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
             fill_nfapi_ulsch_config_request_rel8(&ul_req_tmp->ul_config_pdu_list[ul_req_tmp->number_of_pdus],
                                                  cqi_req,
                                                  cc,
@@ -2284,22 +2284,22 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
               T_INT(6),
               T_INT(round_UL));
             AssertFatal (UE_template->physicalConfigDedicated != NULL, "UE_template->physicalConfigDedicated is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4 != NULL, "UE_template->physicalConfigDedicated->ext4 is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11 is null\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.present == LTE_EPDCCH_Config_r11__config_r11_PR_setup,
-                         "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.present != setup\n");
-            AssertFatal (UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 != NULL,
-                         "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 = NULL\n");
-            LTE_EPDCCH_SetConfig_r11_t *epdcch_setconfig_r11 = UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->ext4 is null\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11 != NULL, "UE_template->physicalConfigDedicated->epdcch_Config_r11 is null\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.present == LTE_EPDCCH_Config_r11__config_r11_PR_setup,
+                         "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.present != setup\n");
+            AssertFatal (UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 != NULL,
+                         "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11 = NULL\n");
+            LTE_EPDCCH_SetConfig_r11_t *epdcch_setconfig_r11 = UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.setConfigToAddModList_r11->list.array[0];
             AssertFatal(epdcch_setconfig_r11 != NULL, "epdcch_setconfig_r11 is null\n");
-            AssertFatal(epdcch_setconfig_r11->ext2 != NULL, "epdcch_setconfig_r11->ext2 is null\n");
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->ext2->mpdcch_config_r13 is null");
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->ext2->mpdcch_config_r13 is null");
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13->present == LTE_EPDCCH_SetConfig_r11__ext2__mpdcch_config_r13_PR_setup,
-                        "epdcch_setconfig_r11->ext2->mpdcch_config_r13->present is not setup\n");
-            AssertFatal(epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310 != NULL, "epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310 is null");
-            AssertFatal(epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310->present == LTE_EPDCCH_SetConfig_r11__ext2__numberPRB_Pairs_v1310_PR_setup,
-                        "epdcch_setconfig_r11->ext2->numberPRB_Pairs_v1310->present is not setup\n");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->ext2 is null\n");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->mpdcch_config_r13 is null");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13 != NULL, "epdcch_setconfig_r11->mpdcch_config_r13 is null");
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13->present == LTE_EPDCCH_SetConfig_r11__mpdcch_config_r13_PR_setup,
+                        "epdcch_setconfig_r11->mpdcch_config_r13->present is not setup\n");
+            AssertFatal(epdcch_setconfig_r11->numberPRB_Pairs_v1310 != NULL, "epdcch_setconfig_r11->numberPRB_Pairs_v1310 is null");
+            AssertFatal(epdcch_setconfig_r11->numberPRB_Pairs_v1310->present == LTE_EPDCCH_SetConfig_r11__numberPRB_Pairs_v1310_PR_setup,
+                        "epdcch_setconfig_r11->numberPRB_Pairs_v1310->present is not setup\n");
             LOG_D(MAC,"[PUSCH %d] Frame %d, Subframe %d: Adding UL 6-0A MPDCCH for BL/CE UE %d/%x, ulsch_frame %d, ulsch_subframe %d,UESS MPDCCH Narrowband %d\n",
                   harq_pid,
                   frameP,
@@ -2308,21 +2308,21 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
                   rnti,
                   sched_frame,
                   sched_subframeP,
-                  (int)epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
-            UE_template->first_rb_ul[harq_pid] = narrowband_to_first_rb(cc, epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13-1);
+                  (int)epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1);
+            UE_template->first_rb_ul[harq_pid] = narrowband_to_first_rb(cc, epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13-1);
             hi_dci0_pdu = &(hi_dci0_req->hi_dci0_pdu_list[hi_dci0_req->number_of_dci+hi_dci0_req->number_of_hi]);
             memset((void *) hi_dci0_pdu, 0, sizeof(nfapi_hi_dci0_request_pdu_t));
             hi_dci0_pdu->pdu_type = NFAPI_HI_DCI0_MPDCCH_DCI_PDU_TYPE;
             hi_dci0_pdu->pdu_size = (uint8_t) (2 + sizeof (nfapi_dl_config_mpdcch_pdu));
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.dci_format = (UE_template->rach_resource_type > 1) ? 5 : 4;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.ce_mode = (UE_template->rach_resource_type > 1) ? 2 : 1;
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_narrowband = epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1;
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_narrowband = epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_Narrowband_r13 - 1;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.number_of_prb_pairs = 6;       // checked above that it has to be this
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.resource_block_assignment = 0; // Note: this can be dynamic
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mpdcch_transmission_type = epdcch_setconfig_r11->transmissionType_r11;  // distibuted
-            AssertFatal(UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 != NULL,
-                        "UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 is null\n");
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.start_symbol = *UE_template->physicalConfigDedicated->ext4->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11;
+            AssertFatal(UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 != NULL,
+                        "UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11 is null\n");
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.start_symbol = *UE_template->physicalConfigDedicated->epdcch_Config_r11->config_r11.choice.setup.startSymbol_r11;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.ecce_index = 0;        // Note: this should be dynamic
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.aggreagation_level = 24;        // OK for CEModeA r1-3 (9.1.5-1b) or CEModeB r1-4
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.rnti_type = 4; // other
@@ -2335,9 +2335,9 @@ void schedule_ulsch_rnti_emtc(module_id_t   module_idP,
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.number_of_resource_blocks = 6;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.mcs = 4;       // adjust according to size of RAR, 208 bits with N1A_PRB=3
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.pusch_repetition_levels = 0;
-            AssertFatal(epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13 == LTE_EPDCCH_SetConfig_r11__ext2__mpdcch_config_r13__setup__mpdcch_pdsch_HoppingConfig_r13_off,
-                        "epdcch_setconfig_r11->ext2->mpdcch_config_r13->mpdcch_pdsch_HoppingConfig_r13 is not off\n");
-            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.frequency_hopping_flag  = 1 - epdcch_setconfig_r11->ext2->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13;
+            AssertFatal(epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13 == LTE_EPDCCH_SetConfig_r11__mpdcch_config_r13__setup__mpdcch_pdsch_HoppingConfig_r13_off,
+                        "epdcch_setconfig_r11->mpdcch_config_r13->mpdcch_pdsch_HoppingConfig_r13 is not off\n");
+            hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.frequency_hopping_flag  = 1 - epdcch_setconfig_r11->mpdcch_config_r13->choice.setup.mpdcch_pdsch_HoppingConfig_r13;
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.redudency_version = rvidx_tab[round_UL&3];
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.new_data_indication = UE_template->oldNDI_UL[harq_pid];
             hi_dci0_pdu->mpdcch_dci_pdu.mpdcch_dci_pdu_rel13.harq_process = harq_pid;

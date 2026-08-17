@@ -199,8 +199,8 @@ int xer_nr_sprint (char *string, size_t string_size, asn_TYPE_descriptor_t *td, 
 uint8_t do_SIB23_NR(rrc_gNB_carrier_data_t *carrier,
                     gNB_RrcConfigurationReq *configuration) {
   asn_enc_rval_t enc_rval;
-  SystemInformation_IEs__sib_TypeAndInfo__Member *sib2 = NULL;
-  SystemInformation_IEs__sib_TypeAndInfo__Member *sib3 = NULL;
+  struct NR_SystemInformation_IEs__sib_TypeAndInfo__Member *sib2 = NULL;
+  struct NR_SystemInformation_IEs__sib_TypeAndInfo__Member *sib3 = NULL;
 
   NR_BCCH_DL_SCH_Message_t *sib_message = CALLOC(1,sizeof(NR_BCCH_DL_SCH_Message_t));
   sib_message->message.present = NR_BCCH_DL_SCH_MessageType_PR_c1;
@@ -213,7 +213,7 @@ uint8_t do_SIB23_NR(rrc_gNB_carrier_data_t *carrier,
   sib->criticalExtensions.choice.systemInformation = CALLOC(1, sizeof(struct NR_SystemInformation_IEs));
 
   struct NR_SystemInformation_IEs *ies = sib->criticalExtensions.choice.systemInformation;
-  sib2 = CALLOC(1, sizeof(SystemInformation_IEs__sib_TypeAndInfo__Member));
+  sib2 = CALLOC(1, sizeof(struct NR_SystemInformation_IEs__sib_TypeAndInfo__Member));
   sib2->present = NR_SystemInformation_IEs__sib_TypeAndInfo__Member_PR_sib2;
   sib2->choice.sib2 = CALLOC(1, sizeof(struct NR_SIB2));
   sib2->choice.sib2->cellReselectionInfoCommon.q_Hyst = NR_SIB2__cellReselectionInfoCommon__q_Hyst_dB1;
@@ -225,7 +225,7 @@ uint8_t do_SIB23_NR(rrc_gNB_carrier_data_t *carrier,
   sib2->choice.sib2->intraFreqCellReselectionInfo.deriveSSB_IndexFromCell = true;
   asn1cSeqAdd(&ies->sib_TypeAndInfo.list, sib2);
 
-  sib3 = CALLOC(1, sizeof(SystemInformation_IEs__sib_TypeAndInfo__Member));
+  sib3 = CALLOC(1, sizeof(struct NR_SystemInformation_IEs__sib_TypeAndInfo__Member));
   sib3->present = NR_SystemInformation_IEs__sib_TypeAndInfo__Member_PR_sib3;
   sib3->choice.sib3 = CALLOC(1, sizeof(struct NR_SIB3));
   asn1cSeqAdd(&ies->sib_TypeAndInfo.list, sib3);
@@ -233,7 +233,6 @@ uint8_t do_SIB23_NR(rrc_gNB_carrier_data_t *carrier,
   //encode SIB to data
   // carrier->SIB23 = (uint8_t *) malloc16(128);
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_BCCH_DL_SCH_Message,
-                                   NULL,
                                    (void *)sib_message,
                                    carrier->SIB23,
                                    100);
@@ -281,7 +280,6 @@ int do_RRCReject(uint8_t Mod_id,
     }
 
     enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_CCCH_Message,
-                                    NULL,
                                     (void *)&dl_ccch_msg,
                                     buffer,
                                     100);
@@ -436,7 +434,7 @@ NR_RadioBearerConfig_t *get_default_rbconfig(int eps_bearer_id,
 
   drb_ToAddMod->pdcp_Config->moreThanOneRLC = NULL;
   asn1cCallocOne(drb_ToAddMod->pdcp_Config->t_Reordering, NR_PDCP_Config__t_Reordering_ms100);
-  drb_ToAddMod->pdcp_Config->ext1 = NULL;
+  /* ext1 not present in R17 PDCP_Config */
 
   asn1cSeqAdd(&rbconfig->drb_ToAddModList->list,drb_ToAddMod);
 
@@ -550,7 +548,7 @@ int do_RRCSetup(rrc_gNB_ue_context_t *const ue_context_pP,
     xer_fprint(stdout, &asn_DEF_NR_DL_CCCH_Message, (void *)&dl_ccch_msg);
   }
 
-  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_CCCH_Message, NULL, (void *)&dl_ccch_msg, buffer, 1000);
+  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_CCCH_Message, (void *)&dl_ccch_msg, buffer, 1000);
 
   AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n", enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -587,7 +585,6 @@ uint8_t do_NR_SecurityModeCommand(
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message,
-                                   NULL,
                                    (void *)&dl_dcch_msg,
                                    buffer,
                                    100);
@@ -645,7 +642,6 @@ uint8_t do_NR_SA_UECapabilityEnquiry( const protocol_ctxt_t *const ctxt_pP,
   OCTET_STRING_t req_freq;
   unsigned char req_freq_buf[1024];
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_CapabilityRequestFilterNR,
-				   NULL,
 				   (void *)sa_band_filter,
 				   req_freq_buf,
 				   1024);
@@ -671,7 +667,6 @@ uint8_t do_NR_SA_UECapabilityEnquiry( const protocol_ctxt_t *const ctxt_pP,
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message,
-                                   NULL,
                                    (void *)&dl_dcch_msg,
                                    buffer,
                                    100);
@@ -707,7 +702,6 @@ int do_NR_RRCRelease(uint8_t *buffer, size_t buffer_size, uint8_t Transaction_id
       NR_RRCRelease_IEs__deprioritisationReq__deprioritisationTimer_min10;
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message,
-                                   NULL,
                                    (void *)&dl_dcch_msg,
                                    buffer,
                                    buffer_size);
@@ -786,7 +780,6 @@ int16_t do_RRCReconfiguration(
       update_cellGroupConfig(cellGroupConfig, ue_context_pP->ue_context.gNB_ue_ngap_id, ue_context_pP ? ue_context_pP->ue_context.UE_Capability_nr : NULL, configuration);
 
       enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig,
-                                       NULL,
                                        (void *)cellGroupConfig,
                                        masterCellGroup_buf,
                                        1000);
@@ -808,7 +801,6 @@ int16_t do_RRCReconfiguration(
     }
 
     enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message,
-                                     NULL,
                                      (void *)&dl_dcch_msg,
                                      buffer,
                                      buffer_size);
@@ -867,7 +859,6 @@ uint8_t do_RRCSetupRequest(uint8_t Mod_id, uint8_t *buffer, size_t buffer_size, 
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_CCCH_Message,
-                                   NULL,
                                    (void *)&ul_ccch_msg,
                                    buffer,
                                    buffer_size);
@@ -899,7 +890,6 @@ do_NR_RRCReconfigurationComplete_for_nsa(
   }
 
   asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_RRCReconfigurationComplete,
-                                                  NULL,
                                                   (void *)&rrc_complete_msg,
                                                   buffer,
                                                   buffer_size);
@@ -939,7 +929,6 @@ do_NR_RRCReconfigurationComplete(
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_DCCH_Message,
-                                   NULL,
                                    (void *)&ul_dcch_msg,
                                    buffer,
                                    buffer_size);
@@ -990,7 +979,6 @@ uint8_t do_RRCSetupComplete(uint8_t Mod_id, uint8_t *buffer, size_t buffer_size,
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_DCCH_Message,
-                                   NULL,
                                    (void *)&ul_dcch_msg,
                                    buffer,
                                    buffer_size);
@@ -1090,7 +1078,6 @@ uint8_t do_RRCReestablishmentRequest(uint8_t Mod_id, uint8_t *buffer, uint16_t c
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_CCCH_Message,
-                                   NULL,
                                    (void *)&ul_ccch_msg,
                                    buffer,
                                    100);
@@ -1148,7 +1135,7 @@ int do_RRCReestablishment(const protocol_ctxt_t *const ctxt_pP,
     xer_fprint(stdout, &asn_DEF_NR_DL_DCCH_Message, (void *)&dl_dcch_msg);
   }
 
-  enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message, NULL, (void *)&dl_dcch_msg, buffer, 100);
+  enc_rval = uper_encode_to_buffer(&asn_DEF_NR_DL_DCCH_Message, (void *)&dl_dcch_msg, buffer, 100);
 
   AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n",
               enc_rval.failed_type->name, enc_rval.encoded);
@@ -1181,7 +1168,6 @@ int do_RRCReestablishmentComplete(uint8_t *buffer, size_t buffer_size, int64_t r
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UL_DCCH_Message,
-                                   NULL,
                                    (void *)&ul_dcch_msg,
                                    buffer,
                                    buffer_size);
@@ -1221,8 +1207,7 @@ NR_MeasConfig_t *get_defaultMeasConfig(const gNB_RrcConfigurationReq *conf)
   monr1->smtc1->periodicityAndOffset.choice.sf20 = 2;
   monr1->smtc1->duration = NR_SSB_MTC__duration_sf2;
   monr1->quantityConfigIndex = 1;
-  monr1->ext1 = calloc(1, sizeof(*monr1->ext1));
-  asn1cCallocOne(monr1->ext1->freqBandIndicatorNR, band);
+  asn1cCallocOne(monr1->freqBandIndicatorNR, band);
   mo1->measObject.choice.measObjectNR = monr1;
   asn1cSeqAdd(&mc->measObjectToAddModList->list, mo1);
   
@@ -1302,7 +1287,7 @@ uint8_t do_NR_Paging(uint8_t Mod_id, uint8_t *buffer, uint32_t tmsi) {
   LOG_D(NR_RRC, "[gNB %d] do_Paging paging_record: PagingRecordList.count %d\n",
         Mod_id, c1->choice.paging->pagingRecordList->list.count);
   asn_enc_rval_t enc_rval = uper_encode_to_buffer(
-      &asn_DEF_NR_PCCH_Message, NULL, (void *)&pcch_msg, buffer, RRC_BUF_SIZE);
+      &asn_DEF_NR_PCCH_Message, (void *)&pcch_msg, buffer, RRC_BUF_SIZE);
   ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_NR_PCCH_Message, &pcch_msg);
   if(enc_rval.encoded == -1) {
     LOG_I(NR_RRC, "[gNB AssertFatal]ASN1 message encoding failed (%s, %lu)!\n",

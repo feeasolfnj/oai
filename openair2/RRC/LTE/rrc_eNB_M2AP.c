@@ -107,7 +107,6 @@ static uint8_t rrc_M2AP_do_MBSFNCountingRequest(
   xer_fprint(stdout,&asn_DEF_LTE_MCCH_Message,(void *)mcch_message);
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_MCCH_Message,
-                                   NULL,
                                    (void *)mcch_message,
                                    buffer,
                                    100);
@@ -233,7 +232,6 @@ static uint8_t rrc_M2AP_do_MBSFNAreaConfig(
   }
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_MCCH_Message,
-                                   NULL,
                                    (void *)mcch_message,
                                    buffer,
                                    100);
@@ -569,7 +567,7 @@ static uint8_t rrc_M2AP_do_SIB1_MBMS_SIB13(
     sib1_MBMS->systemInformationBlockType13_r14 = CALLOC(1, sizeof(*sib1_MBMS->systemInformationBlockType13_r14));
   memcpy(sib1_MBMS->systemInformationBlockType13_r14, RC.rrc[Mod_id]->carrier[CC_id].sib13, sizeof(*RC.rrc[Mod_id]->carrier[CC_id].sib13));
 
-  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message_MBMS, NULL, (void *)bcch_message_fembms, RC.rrc[Mod_id]->carrier[CC_id].SIB1_MBMS, 100);
+  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message_MBMS, (void *)bcch_message_fembms, RC.rrc[Mod_id]->carrier[CC_id].SIB1_MBMS, 100);
   AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n",
                enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -584,7 +582,7 @@ static uint8_t rrc_M2AP_do_SIB1_MBMS_SIB13(
   
  //xer_fprint(stdout, &asn_DEF_LTE_BCCH_DL_SCH_Message, (void *)bcch_message);
 
-  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message, NULL, (void *)bcch_message, encoded_buffer, 900);
+  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message, (void *)bcch_message, encoded_buffer, 900);
   AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n",
                enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -836,7 +834,6 @@ static uint8_t rrc_M2AP_do_SIB23_SIB2(
  //xer_fprint(stdout, &asn_DEF_LTE_BCCH_DL_SCH_Message, (void *)bcch_message);
 
  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message,
-                                   NULL,
                                    (void *)bcch_message,
                                    buffer,
                                    900);
@@ -979,7 +976,6 @@ static uint8_t rrc_M2AP_do_SIB23_SIB13(
  //xer_fprint(stdout, &asn_DEF_LTE_BCCH_DL_SCH_Message, (void *)bcch_message);
 
  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message,
-                                   NULL,
                                    (void *)bcch_message,
                                    buffer,
                                    900);
@@ -1226,7 +1222,6 @@ static uint8_t rrc_M2AP_do_SIB23_SIB2_SIB13(
  //xer_fprint(stdout, &asn_DEF_LTE_BCCH_DL_SCH_Message, (void *)bcch_message);
 
  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_BCCH_DL_SCH_Message,
-                                   NULL,
                                    (void *)bcch_message,
                                    buffer,
                                    900);

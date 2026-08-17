@@ -118,4 +118,34 @@ static inline uint64_t BIT_STRING_to_uint64(BIT_STRING_t *asn) {
   TyPe *lOcPtr= calloc(1,sizeof(TyPe)); \
   asn1cSeqAdd(&VaR,lOcPtr)
 
+/*
+ * asn1c free-method constants.
+ * The generated asn1c in this toolchain uses the old SEQUENCE_free() API
+ * taking an `int contents_only` argument (0 = free the whole struct via
+ * FREEMEM(), !=0 = free contents only and zero the struct), while OAI source
+ * code uses the newer symbolic enum names. Map the symbolic names to the
+ * matching integer values so legacy OAI sources compile unchanged.
+ *   ASFM_FREE_EVERYTHING (0) -> FREEMEM(sptr): free structure and contents
+ *   ASFM_FREE_UNDERLYING (1) -> free contents, keep/zero structure
+ *   ASFM_FREE_NOTHING    (2) -> free nothing
+ * Newer asn1c also defines ASFM_FREE_UNDERLYING_AND_RESET (free contents and
+ * zero the struct), which has the same effect as ASFM_FREE_UNDERLYING under
+ * the old contents_only API, so alias it to 1.
+ */
+#ifndef ASFM_FREE_EVERYTHING
+#define ASFM_FREE_EVERYTHING 0
+#endif
+#ifndef ASFM_FREE_UNDERLYING
+#define ASFM_FREE_UNDERLYING 1
+#endif
+#ifndef ASFM_FREE_NOTHING
+#define ASFM_FREE_NOTHING 2
+#endif
+#ifndef ASFM_FREE_UNDERLYING_AND_RESET
+#define ASFM_FREE_UNDERLYING_AND_RESET ASFM_FREE_UNDERLYING
+#endif
+#ifndef ASFM_FREE_CONTENTS
+#define ASFM_FREE_CONTENTS ASFM_FREE_UNDERLYING
+#endif
+
 #endif

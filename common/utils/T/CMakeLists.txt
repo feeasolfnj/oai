@@ -1,37 +1,54 @@
-add_executable(genids genids.c)
-set_target_properties(genids PROPERTIES RUNTIME_OUTPUT_DIRECTORY .)
+# For cross-compilation (e.g., RISC-V), genids and _check_vcd must run on host
+# Skip building them with the cross-compiler; instead pre-generate the files.
+if(NOT CMAKE_CROSSCOMPILING)
+  add_executable(genids genids.c)
+  set_target_properties(genids PROPERTIES RUNTIME_OUTPUT_DIRECTORY .)
 
-add_custom_command(OUTPUT T_IDs.h
-                   COMMAND ./genids ${CMAKE_CURRENT_SOURCE_DIR}/T_messages.txt T_IDs.h
-                   DEPENDS genids
-                   COMMENT "Generating T_IDs.h from T_messages.txt"
-)
-add_custom_command(OUTPUT T_messages.txt.h
-                   COMMAND xxd -i T_messages.txt ${CMAKE_CURRENT_BINARY_DIR}/T_messages.txt.h
-                   COMMENT "Generating T_messages.txt.h from T_messages.txt"
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+  add_custom_command(OUTPUT T_IDs.h
+                     COMMAND ./genids ${CMAKE_CURRENT_SOURCE_DIR}/T_messages.txt T_IDs.h
+                     DEPENDS genids
+                     COMMENT "Generating T_IDs.h from T_messages.txt"
+  )
+  add_custom_command(OUTPUT T_messages.txt.h
+                     COMMAND xxd -i T_messages.txt ${CMAKE_CURRENT_BINARY_DIR}/T_messages.txt.h
+                     COMMENT "Generating T_messages.txt.h from T_messages.txt"
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
-add_executable(_check_vcd check_vcd.c tracer/database.c tracer/utils.c T_IDs.h T_messages.txt.h)
-target_include_directories(_check_vcd PRIVATE
-                           .. ../itti ../../../openair2/COMMON tracer
-                           ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_options(_check_vcd PRIVATE -Wall)
-target_link_libraries(_check_vcd PRIVATE m pthread)
-set_target_properties(_check_vcd PROPERTIES RUNTIME_OUTPUT_DIRECTORY .)
+  add_executable(_check_vcd check_vcd.c tracer/database.c tracer/utils.c T_IDs.h T_messages.txt.h)
+  target_include_directories(_check_vcd PRIVATE
+                             .. ../itti ../../../openair2/COMMON tracer
+                             ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+  target_compile_options(_check_vcd PRIVATE -Wall)
+  target_link_libraries(_check_vcd PRIVATE m pthread)
+  set_target_properties(_check_vcd PROPERTIES RUNTIME_OUTPUT_DIRECTORY .)
 
-add_custom_target(check_vcd
-                  COMMAND _check_vcd ${CMAKE_CURRENT_SOURCE_DIR}/T_messages.txt ${CMAKE_CURRENT_SOURCE_DIR}/../LOG/vcd_signal_dumper.h
-                  DEPENDS _check_vcd
-                  COMMENT "Checking validity of VCD files"
-)
+  add_custom_target(check_vcd
+                    COMMAND _check_vcd ${CMAKE_CURRENT_SOURCE_DIR}/T_messages.txt ${CMAKE_CURRENT_SOURCE_DIR}/../LOG/vcd_signal_dumper.h
+                    DEPENDS _check_vcd
+                    COMMENT "Checking validity of VCD files"
+  )
 
-# This rule is specifically needed to generate T files before anything else in
-# a project that uses the T.
-# See root CMakeLists.txt, there are some 'add_dependencies' showing that.
-# Basically we create a custom target and we make other targets depend on it.
-# That forces cmake to generate T files before anything else.
-add_custom_target(generate_T DEPENDS T_IDs.h check_vcd)
+  # This rule is specifically needed to generate T files before anything else in
+  # a project that uses the T.
+  # See root CMakeLists.txt, there are some 'add_dependencies' showing that.
+  # Basically we create a custom target and we make other targets depend on it.
+  # That forces cmake to generate T files before anything else.
+  add_custom_target(generate_T DEPENDS T_IDs.h check_vcd)
+else()
+  # Cross-compilation: pre-generate the files using host tools
+  # Copy pre-generated T_IDs.h and T_messages.txt.h to build directory
+  add_custom_command(OUTPUT T_IDs.h
+                     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/T_IDs_prebuilt.h T_IDs.h
+                     COMMENT "Copying pre-generated T_IDs.h for cross-compilation"
+  )
+  add_custom_command(OUTPUT T_messages.txt.h
+                     COMMAND xxd -i T_messages.txt ${CMAKE_CURRENT_BINARY_DIR}/T_messages.txt.h
+                     COMMENT "Generating T_messages.txt.h from T_messages.txt"
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  add_custom_target(generate_T DEPENDS T_IDs.h)
+endif()
 
 # even if T is off, we need the headers as many targets depend on it
 # for this, create an INTERFACE (header-only) library T_headers. To ensure the

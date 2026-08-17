@@ -433,7 +433,7 @@ config_sib2(int Mod_idP,
 
   if (RC.mac[Mod_idP]->common_channels[CC_idP].mib->message.schedulingInfoSIB1_BR_r13 > 0) {
     AssertFatal(radioResourceConfigCommon_BRP != NULL, "radioResource rou is missing\n");
-    AssertFatal(radioResourceConfigCommon_BRP->ext4 != NULL, "ext4 is missing\n");
+    AssertFatal(radioResourceConfigCommon_BRP->prach_ConfigCommon_v1310 != NULL, "ext4 is missing\n");
     cfg->emtc_config.prach_catm_root_sequence_index.value = radioResourceConfigCommon_BRP->prach_Config.rootSequenceIndex;
     cfg->emtc_config.prach_catm_root_sequence_index.tl.tag = NFAPI_EMTC_CONFIG_PRACH_CATM_ROOT_SEQUENCE_INDEX_TAG;
     cfg->num_tlv++;
@@ -443,7 +443,7 @@ config_sib2(int Mod_idP,
     cfg->emtc_config.prach_catm_high_speed_flag.value = radioResourceConfigCommon_BRP->prach_Config.prach_ConfigInfo.highSpeedFlag;
     cfg->emtc_config.prach_catm_high_speed_flag.tl.tag = NFAPI_EMTC_CONFIG_PRACH_CATM_HIGH_SPEED_FLAG;
     cfg->num_tlv++;
-    struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = radioResourceConfigCommon_BRP->ext4->prach_ConfigCommon_v1310;
+    struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = radioResourceConfigCommon_BRP->prach_ConfigCommon_v1310;
     LTE_PRACH_ParametersListCE_r13_t *prach_ParametersListCE_r13 = &ext4_prach->prach_ParametersListCE_r13;
     LTE_PRACH_ParametersCE_r13_t *p;
     cfg->emtc_config.prach_ce_level_0_enable.value = 0;
@@ -574,7 +574,7 @@ config_sib2(int Mod_idP,
     }
 
     AssertFatal(cfg->emtc_config.prach_ce_level_0_enable.value>0,"CE_level0 is not enabled\n");
-    struct LTE_FreqHoppingParameters_r13 *ext4_freqHoppingParameters = radioResourceConfigCommonP->ext4->freqHoppingParameters_r13;
+    struct LTE_FreqHoppingParameters_r13 *ext4_freqHoppingParameters = radioResourceConfigCommonP->freqHoppingParameters_r13;
 
     if ((ext4_freqHoppingParameters) &&
         (ext4_freqHoppingParameters->interval_ULHoppingConfigCommonModeA_r13)) {

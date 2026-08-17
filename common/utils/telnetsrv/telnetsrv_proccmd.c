@@ -224,7 +224,13 @@ char aname[256];
 
   unsigned int eax = 11, ebx = 0, ecx = 1, edx = 0;
 
+#if defined(__x86_64__) || defined(__i386__)
   asm volatile("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "0"(eax), "2"(ecx) :);
+#else
+  /* Non-x86: use basic values */
+  ebx = 1;  /* Assume 1 thread */
+  edx = 0;
+#endif
 
   prnt("System has %d cores %d threads %d Actual threads", eax, ebx, edx);
 
