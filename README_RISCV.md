@@ -41,15 +41,15 @@
 
 | 能力 | 状态 | 说明 |
 |------|------|------|
-| RISC-V 交叉编译 | ? | gNB(121MB) + UE(57MB) RISC-V ELF |
-| PBCH 同步 | ? | UE 解码 MIB，完成小区同步 |
-| SIB1 解码 | ? | UE 解码系统信息，获取 PRACH 配置 |
-| 随机接入 (RA) | ? | PRACH Msg1→RAR Msg2→Msg3→Msg4 |
-| RRC 连接 | ? | RRCSetup→SecurityMode→RRC CONNECTED |
-| DRB 数据通道 | ? | noS1 模式手工建立默认 DRB |
-| 下行数据传输 | ? | gNB→5G 协议栈→UE (48 字节) |
-| 上行数据传输 | ? | UE→5G 协议栈→gNB (48 字节) |
-| Ping 验证 | ? | 0% 丢包，双向通过 5G 栈 |
+| RISC-V 交叉编译 | 已完成 | gNB(121MB) + UE(57MB) RISC-V ELF |
+| PBCH 同步 | 已完成 | UE 解码 MIB，完成小区同步 |
+| SIB1 解码 | 已完成 | UE 解码系统信息，获取 PRACH 配置 |
+| 随机接入 (RA) | 已完成 | PRACH Msg1→RAR Msg2→Msg3→Msg4 |
+| RRC 连接 | 已完成 | RRCSetup→SecurityMode→RRC CONNECTED |
+| DRB 数据通道 | 已完成 | noS1 模式手工建立默认 DRB |
+| 下行数据传输 | 已完成 | gNB→5G 协议栈→UE (48 字节) |
+| 上行数据传输 | 已完成 | UE→5G 协议栈→gNB (48 字节) |
+| Ping 验证 | 已完成 | 0% 丢包，双向通过 5G 栈 |
 
 ## 5G 接入完整流程
 
@@ -274,17 +274,17 @@ oai/
 
 ### noS1 能做什么？
 
-- ? 验证 5G PHY（物理层 OFDM/LDPC/SIMD）
-- ? 验证 L2/L3（MAC/RLC/PDCP/RRC）
-- ? 测试 UE 接入 gNB 的完整流程
-- ? 端到端 IP 数据双向传输
-- ? RISC-V 架构可行性验证
+- [x] 验证 5G PHY（物理层 OFDM/LDPC/SIMD）
+- [x] 验证 L2/L3（MAC/RLC/PDCP/RRC）
+- [x] 测试 UE 接入 gNB 的完整流程
+- [x] 端到端 IP 数据双向传输
+- [x] RISC-V 架构可行性验证
 
 ### noS1 不能做什么？
 
-- ? 上互联网（没有 UPF 做 NAT/路由）
-- ? UE 注册鉴权（没有 AMF 做 USIM 鉴权）
-- ? 多 UE 切换（没有核心网管理移动性）
+- [ ] 上互联网（没有 UPF 做 NAT/路由）
+- [ ] UE 注册鉴权（没有 AMF 做 USIM 鉴权）
+- [ ] 多 UE 切换（没有核心网管理移动性）
 
 ## 验证日志
 
