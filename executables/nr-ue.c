@@ -290,6 +290,7 @@ static void *NRUE_phy_stub_standalone_pnf_task(void *arg)
 
     frame_t frame = NFAPI_SFNSLOT2SFN(sfn_slot);
     int slot = NFAPI_SFNSLOT2SLOT(sfn_slot);
+    LOG_I(NR_MAC, "Processing slot [%d.%d]\n", frame, slot);
     if (sfn_slot == last_sfn_slot) {
       LOG_D(NR_MAC, "repeated sfn_sf = %d.%d\n",
             frame, slot);

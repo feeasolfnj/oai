@@ -32,6 +32,26 @@
 #include "M2AP_ProtocolExtensionContainer.h"
 #include "M2AP_PMCH-Configuration-Item.h"
 #include "M2AP_asn_constant.h"
+/* RISC-V port: the M2AP source headers (m2ap_eNB_interface_management.h, etc.)
+ * reference these M2AP_*_t message/cause types but m2ap_common.h did not pull
+ * them in -- the original .c files included extra headers (m2ap_ids.h,
+ * m2ap_eNB_generate_messages.h, ...) that brought them transitively. Add them
+ * here so the no-op stubs (which include only m2ap_common.h + the specific
+ * header) resolve all types. */
+#include "M2AP_Cause.h"
+/* RISC-V port: the mouse07410 asn1c run for M2AP emitted the CHOICE enum
+ * typedef as the non-compound `Cause_PR` (enum members are prefixed
+ * M2AP_Cause_PR_*, but the type is just Cause_PR), whereas the S1AP run used
+ * the compound name S1AP_Cause_PR. OAI's M2AP source expects the compound type
+ * name M2AP_Cause_PR (e.g. m2ap_eNB_set_cause's `M2AP_Cause_PR cause_type`
+ * parameter). Alias the compound name to the generated type so the source
+ * compiles unchanged. */
+typedef Cause_PR M2AP_Cause_PR;
+#include "M2AP_Reset.h"
+#include "M2AP_ResetAcknowledge.h"
+#include "M2AP_ErrorIndication.h"
+#include "M2AP_MCEConfigurationUpdateFailure.h"
+#include "M2AP_MCEConfigurationUpdateAcknowledge.h"
 #include "intertask_interface.h"
 
 #include "common/ran_context.h"

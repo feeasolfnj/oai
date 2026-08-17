@@ -268,7 +268,7 @@ void generate_Msg2(module_id_t module_idP,
   }
 
   if (cc[CC_idP].mib->message.schedulingInfoSIB1_BR_r13 > 0 && cc[CC_idP].radioResourceConfigCommon_BR) {
-    ext4_prach = cc[CC_idP].radioResourceConfigCommon_BR->ext4->prach_ConfigCommon_v1310;
+    ext4_prach = cc[CC_idP].radioResourceConfigCommon_BR->prach_ConfigCommon_v1310;
     prach_ParametersListCE_r13 = &ext4_prach->prach_ParametersListCE_r13;
 
     switch (prach_ParametersListCE_r13->list.count) {
@@ -607,9 +607,9 @@ generate_Msg4(module_id_t module_idP,
   int             n1pucchan[4] = { 0, 0, 0, 0 };
 
   if (cc[CC_idP].mib->message.schedulingInfoSIB1_BR_r13 > 0 && cc[CC_idP].radioResourceConfigCommon_BR) {
-    ext4_prach = cc[CC_idP].radioResourceConfigCommon_BR->ext4->prach_ConfigCommon_v1310;
+    ext4_prach = cc[CC_idP].radioResourceConfigCommon_BR->prach_ConfigCommon_v1310;
     prach_ParametersListCE_r13 = &ext4_prach->prach_ParametersListCE_r13;
-    ext4_pucch = cc[CC_idP].radioResourceConfigCommon_BR->ext4->pucch_ConfigCommon_v1310;
+    ext4_pucch = cc[CC_idP].radioResourceConfigCommon_BR->pucch_ConfigCommon_v1310;
     pucch_N1PUCCH_AN_InfoList_r13 = ext4_pucch->n1PUCCH_AN_InfoList_r13;
     AssertFatal (prach_ParametersListCE_r13 != NULL, "prach_ParametersListCE_r13 is null\n");
     AssertFatal (pucch_N1PUCCH_AN_InfoList_r13 != NULL, "pucch_N1PUCCH_AN_InfoList_r13 is null\n");
@@ -1279,8 +1279,8 @@ initiate_ra_proc(module_id_t module_idP,
 
   if (cc->mib->message.schedulingInfoSIB1_BR_r13>0) {
     AssertFatal(cc->radioResourceConfigCommon_BR != NULL,"radioResourceConfigCommon_BR is null\n");
-    AssertFatal(cc->radioResourceConfigCommon_BR->ext4 != NULL, "radioResourceConfigCommon_BR->ext4 is null\n");
-    ext4_prach = cc->radioResourceConfigCommon_BR->ext4->prach_ConfigCommon_v1310;
+    AssertFatal(cc->radioResourceConfigCommon_BR->prach_ConfigCommon_v1310 != NULL, "radioResourceConfigCommon_BR->ext4 is null\n");
+    ext4_prach = cc->radioResourceConfigCommon_BR->prach_ConfigCommon_v1310;
     AssertFatal(ext4_prach!=NULL,"ext4_prach is null\n");
     prach_ParametersListCE_r13 = &ext4_prach->prach_ParametersListCE_r13;
   }

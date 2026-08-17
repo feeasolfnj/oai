@@ -121,7 +121,13 @@ char *itoa(int i) {
 void *memcpy1(void *dst,const void *src,size_t n) {
 
   void *ret=dst;
+#if defined(__x86_64__) && defined(__x86_64__)
+  /* Only use x86 inline assembly when compiling for actual x86 hardware,
+   * not when cross-compiling to RISC-V with __x86_64__ defined for SIMD emulation */
   asm volatile("rep movsb" : "+D" (dst) : "c"(n), "S"(src) : "cc","memory");
+#else
+  memcpy(dst, src, n);
+#endif
   return(ret);
 }
 

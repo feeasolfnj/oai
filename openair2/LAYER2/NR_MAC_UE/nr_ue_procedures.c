@@ -298,7 +298,11 @@ int8_t nr_ue_decode_BCCH_DL_SCH(module_id_t module_id,
 {
   NR_UE_MAC_INST_t *mac = get_mac_inst(module_id);
   if(ack_nack) {
-    LOG_D(NR_MAC, "Decoding NR-BCCH-DL-SCH-Message (SIB1 or SI)\n");
+    LOG_I(NR_MAC, "Decoding NR-BCCH-DL-SCH-Message (SIB1 or SI), pdu_len=%d, get_sib1=%d\n", pdu_len, mac->get_sib1);
+    LOG_I(NR_MAC, "BCCH PDU bytes: ");
+    for (int k=0; k<((pdu_len<20)?pdu_len:20); k++)
+      LOG_I(NR_MAC, "%02x ", ((uint8_t*)pduP)[k]);
+    LOG_I(NR_MAC, "\n");
     nr_mac_rrc_data_ind_ue(module_id, cc_id, gNB_index, 0, 0, 0, NR_BCCH_DL_SCH, (uint8_t *) pduP, pdu_len);
   }
   else
@@ -1122,7 +1126,7 @@ int8_t nr_ue_process_dci(module_id_t module_id, int cc_id, uint8_t gNB_index, fr
                                                nb_rb_oh, 0, Nl);
 
     // TBS_LBRM according to section 5.4.2.1 of 38.212
-    long *maxMIMO_Layers = current_DL_BWP->pdsch_servingcellconfig->ext1->maxMIMO_Layers;
+    long *maxMIMO_Layers = current_DL_BWP->pdsch_servingcellconfig->maxMIMO_Layers;
     AssertFatal (maxMIMO_Layers != NULL,"Option with max MIMO layers not configured is not supported\n");
     int nl_tbslbrm = *maxMIMO_Layers < 4 ? *maxMIMO_Layers : 4;
     int bw_tbslbrm = get_dlbw_tbslbrm(current_DL_BWP->initial_BWPSize, mac->cg);
@@ -2995,10 +2999,10 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
 
     case NR_RNTI_P:
       /*
-      // Short Messages Indicator  E2 bits
+      // Short Messages Indicator ?E2 bits
       for (int i=0; i<2; i++)
       dci_pdu |= (((uint64_t)dci_pdu_rel15->short_messages_indicator>>(1-i))&1)<<(dci_size-pos++);
-      // Short Messages  E8 bits
+      // Short Messages ?E8 bits
       for (int i=0; i<8; i++)
       *dci_pdu |= (((uint64_t)dci_pdu_rel15->short_messages>>(7-i))&1)<<(dci_size-pos++);
       // Freq domain assignment 0-16 bit
@@ -3159,7 +3163,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
 #ifdef DEBUG_EXTRACT_DCI
       LOG_D(MAC,"time-domain assignment %d  (4 bits)=> %d (0x%lx)\n",dci_pdu_rel15->time_domain_assignment.val,dci_size-pos,*dci_pdu);
 #endif
-	// Frequency hopping flag  E1 bit
+	// Frequency hopping flag ?E1 bit
 	pos++;
 	dci_pdu_rel15->frequency_hopping_flag.val= (*dci_pdu>>(dci_size-pos))&1;
 #ifdef DEBUG_EXTRACT_DCI
@@ -3189,13 +3193,13 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
 #ifdef DEBUG_EXTRACT_DCI
 	LOG_D(MAC,"HARQ_PID %d (%d bits)=> %d (0x%lx)\n",dci_pdu_rel15->harq_pid,4,dci_size-pos,*dci_pdu);
 #endif
-	// TPC command for scheduled PUSCH  E2 bits
+	// TPC command for scheduled PUSCH ?E2 bits
 	pos+=2;
 	dci_pdu_rel15->tpc = (*dci_pdu>>(dci_size-pos))&3;
 #ifdef DEBUG_EXTRACT_DCI
 	LOG_D(MAC,"TPC %d (%d bits)=> %d (0x%lx)\n",dci_pdu_rel15->tpc,2,dci_size-pos,*dci_pdu);
 #endif
-	// UL/SUL indicator  E1 bit
+	// UL/SUL indicator ?E1 bit
 	/* commented for now (RK): need to get this from BWP descriptor
 	   if (cfg->pucch_config.pucch_GroupHopping.value)
 	   dci_pdu->= ((uint64_t)*dci_pdu>>(dci_size-pos)ul_sul_indicator&1)<<(dci_size-pos++);
@@ -3228,7 +3232,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
 #ifdef DEBUG_EXTRACT_DCI
       LOG_I(MAC,"time-domain assignment %d  (4 bits)=> %d (0x%lx)\n",dci_pdu_rel15->time_domain_assignment.val,dci_size-pos,*dci_pdu);
 #endif
-	// Frequency hopping flag  E1 bit
+	// Frequency hopping flag ?E1 bit
 	pos++;
 	dci_pdu_rel15->frequency_hopping_flag.val= (*dci_pdu>>(dci_size-pos))&1;
 #ifdef DEBUG_EXTRACT_DCI
@@ -3258,7 +3262,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
 #ifdef DEBUG_EXTRACT_DCI
 	LOG_I(MAC,"HARQ_PID %d (%d bits)=> %d (0x%lx)\n",dci_pdu_rel15->harq_pid,4,dci_size-pos,*dci_pdu);
 #endif
-	// TPC command for scheduled PUSCH  E2 bits
+	// TPC command for scheduled PUSCH ?E2 bits
 	pos+=2;
 	dci_pdu_rel15->tpc = (*dci_pdu>>(dci_size-pos))&3;
 #ifdef DEBUG_EXTRACT_DCI
@@ -3391,7 +3395,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
         dci_pdu_rel15->time_domain_assignment.val = (*dci_pdu>>(dci_size-pos))&((1<<dci_pdu_rel15->time_domain_assignment.nbits)-1);
         
         // Not supported yet - skip for now
-        // Frequency hopping flag – 1 bit 
+        // Frequency hopping flag �C 1 bit 
         //pos++;
         //dci_pdu_rel15->frequency_hopping_flag.val= (*dci_pdu>>(dci_size-pos))&1;
 
@@ -3419,7 +3423,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
         pos+=dci_pdu_rel15->dai[1].nbits;
         dci_pdu_rel15->dai[1].val = (*dci_pdu>>(dci_size-pos))&((1<<dci_pdu_rel15->dai[1].nbits)-1);
 
-        // TPC command for scheduled PUSCH – 2 bits
+        // TPC command for scheduled PUSCH �C 2 bits
         pos+=2;
         dci_pdu_rel15->tpc = (*dci_pdu>>(dci_size-pos))&3;
 
@@ -3463,7 +3467,7 @@ static uint8_t nr_extract_dci_info(NR_UE_MAC_INST_t *mac,
         pos+=1;
         dci_pdu_rel15->ulsch_indicator = (*dci_pdu>>(dci_size-pos))&0x1;
 
-        // UL/SUL indicator – 1 bit
+        // UL/SUL indicator �C 1 bit
         /* commented for now (RK): need to get this from BWP descriptor
           if (cfg->pucch_config.pucch_GroupHopping.value)
           dci_pdu->= ((uint64_t)*dci_pdu>>(dci_size-pos)ul_sul_indicator&1)<<(dci_size-pos++);

@@ -35,6 +35,10 @@
 #include <limits.h>
 #include <executables/softmodem-common.h>
 
+#include "NR_PUSCH-CodeBlockGroupTransmission.h"
+#include "NR_PDSCH-CodeBlockGroupTransmission.h"
+#include "NR_UCI-OnPUSCH.h"
+
 #define reserved 0xffff
 
 
@@ -1283,8 +1287,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa1, -1, 1, 0, -1, 965830828032, 7, 2, 3, 2}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xa1, -1, 1, 0, -1, 586406201480, 7, 1, 3, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa1, -1, 1, 0, -1, 586406201480, 0, 1, 6, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa1, -1, 1, 0, -1, 733007751850, 0, 1, 6, 2}, // (subframe number :1,3,5,7,…,37,39)
-    {0xa1, -1, 1, 0, -1, 1099511627775, 7, 1, 3, 2}, // (subframe number :0,1,2,…,39)
+    {0xa1, -1, 1, 0, -1, 733007751850, 0, 1, 6, 2}, // (subframe number :1,3,5,7,��,37,39)
+    {0xa1, -1, 1, 0, -1, 1099511627775, 7, 1, 3, 2}, // (subframe number :0,1,2,��,39)
     {0xa2, -1, 16, 1, -1, 567489872400, 0, 2, 3, 4}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa2, -1, 16, 1, -1, 586406201480, 0, 1, 3, 4}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa2, -1, 8, 1, -1, 567489872400, 0, 2, 3, 4}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1313,8 +1317,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa2, -1, 1, 0, -1, 965830828032, 5, 2, 2, 4}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xa2, -1, 1, 0, -1, 586406201480, 5, 1, 2, 4}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa2, -1, 1, 0, -1, 586406201480, 0, 1, 3, 4}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa2, -1, 1, 0, -1, 733007751850, 0, 1, 3, 4}, // (subframe number :1,3,5,7,…,37,39)
-    {0xa2, -1, 1, 0, -1, 1099511627775, 5, 1, 2, 4}, // (subframe number :0,1,2,…,39)
+    {0xa2, -1, 1, 0, -1, 733007751850, 0, 1, 3, 4}, // (subframe number :1,3,5,7,��,37,39)
+    {0xa2, -1, 1, 0, -1, 1099511627775, 5, 1, 2, 4}, // (subframe number :0,1,2,��,39)
     {0xa3, -1, 16, 1, -1, 567489872400, 0, 2, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa3, -1, 16, 1, -1, 586406201480, 0, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa3, -1, 8, 1, -1, 567489872400, 0, 2, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1343,8 +1347,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa3, -1, 1, 0, -1, 965830828032, 7, 2, 1, 6}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xa3, -1, 1, 0, -1, 586406201480, 7, 1, 1, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa3, -1, 1, 0, -1, 586406201480, 0, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa3, -1, 1, 0, -1, 733007751850, 0, 1, 2, 6}, // (subframe number :1,3,5,7,…,37,39)
-    {0xa3, -1, 1, 0, -1, 1099511627775, 7, 1, 1, 6}, // (subframe number :0,1,2,…,39)
+    {0xa3, -1, 1, 0, -1, 733007751850, 0, 1, 2, 6}, // (subframe number :1,3,5,7,��,37,39)
+    {0xa3, -1, 1, 0, -1, 1099511627775, 7, 1, 1, 6}, // (subframe number :0,1,2,��,39)
     {0xb1, -1, 16, 1, -1, 567489872400, 2, 2, 6, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xb1, -1, 8, 1, -1, 567489872400, 2, 2, 6, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xb1, -1, 8, 1, 2, 550293209600, 2, 2, 6, 2}, // (subframe number :9,19,29,39)
@@ -1366,8 +1370,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xb1, -1, 1, 0, -1, 586406201480, 8, 1, 3, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xb1, -1, 1, 0, -1, 965830828032, 8, 2, 3, 2}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xb1, -1, 1, 0, -1, 586406201480, 2, 1, 6, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xb1, -1, 1, 0, -1, 733007751850, 2, 1, 6, 2}, // (subframe number :1,3,5,7,…,37,39)
-    {0xb1, -1, 1, 0, -1, 1099511627775, 8, 1, 3, 2}, // (subframe number :0,1,2,…,39)
+    {0xb1, -1, 1, 0, -1, 733007751850, 2, 1, 6, 2}, // (subframe number :1,3,5,7,��,37,39)
+    {0xb1, -1, 1, 0, -1, 1099511627775, 8, 1, 3, 2}, // (subframe number :0,1,2,��,39)
     {0xb4, -1, 16, 1, 2, 567489872400, 0, 2, 1, 12}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xb4, -1, 16, 1, 2, 586406201480, 0, 1, 1, 12}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xb4, -1, 8, 1, 2, 567489872400, 0, 2, 1, 12}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1396,10 +1400,10 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xb4, -1, 1, 0, -1, 965830828032, 2, 2, 1, 12}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xb4, -1, 1, 0, -1, 586406201480, 0, 1, 1, 12}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xb4, -1, 1, 0, -1, 586406201480, 2, 1, 1, 12}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xb4, -1, 1, 0, -1, 44739240, 2, 1, 1, 12}, // (subframe number :3, 5, 7, …, 23,25)
-    {0xb4, -1, 1, 0, -1, 44739240, 0, 2, 1, 12}, // (subframe number :3, 5, 7, …, 23,25)
-    {0xb4, -1, 1, 0, -1, 733007751850, 0, 1, 1, 12}, // (subframe number :1,3,5,7,…,37,39)
-    {0xb4, -1, 1, 0, -1, 1099511627775, 2, 1, 1, 12}, // (subframe number :0, 1, 2,…, 39)
+    {0xb4, -1, 1, 0, -1, 44739240, 2, 1, 1, 12}, // (subframe number :3, 5, 7, ��, 23,25)
+    {0xb4, -1, 1, 0, -1, 44739240, 0, 2, 1, 12}, // (subframe number :3, 5, 7, ��, 23,25)
+    {0xb4, -1, 1, 0, -1, 733007751850, 0, 1, 1, 12}, // (subframe number :1,3,5,7,��,37,39)
+    {0xb4, -1, 1, 0, -1, 1099511627775, 2, 1, 1, 12}, // (subframe number :0, 1, 2,��, 39)
     {0xc0, -1, 16, 1, -1, 567489872400, 0, 2, 7, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xc0, -1, 16, 1, -1, 586406201480, 0, 1, 7, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xc0, -1, 8, 1, -1, 567489872400, 0, 1, 7, 2}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1427,8 +1431,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xc0, -1, 1, 0, -1, 965830828032, 8, 2, 3, 2}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xc0, -1, 1, 0, -1, 586406201480, 8, 1, 3, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xc0, -1, 1, 0, -1, 586406201480, 0, 1, 7, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xc0, -1, 1, 0, -1, 733007751850, 0, 1, 7, 2}, // (subframe number :1,3,5,7,…,37,39)
-    {0xc0, -1, 1, 0, -1, 1099511627775, 8, 1, 3, 2}, // (subframe number :0,1,2,…,39)
+    {0xc0, -1, 1, 0, -1, 733007751850, 0, 1, 7, 2}, // (subframe number :1,3,5,7,��,37,39)
+    {0xc0, -1, 1, 0, -1, 1099511627775, 8, 1, 3, 2}, // (subframe number :0,1,2,��,39)
     {0xc2, -1, 16, 1, -1, 567489872400, 0, 2, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xc2, -1, 16, 1, -1, 586406201480, 0, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xc2, -1, 8, 1, -1, 567489872400, 0, 2, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1456,8 +1460,8 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xc2, -1, 1, 0, -1, 965830828032, 7, 2, 1, 6}, // (subframe number :13,14,15, 29,30,31,37,38,39)
     {0xc2, -1, 1, 0, -1, 586406201480, 7, 1, 1, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xc2, -1, 1, 0, -1, 586406201480, 0, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xc2, -1, 1, 0, -1, 733007751850, 0, 1, 2, 6}, // (subframe number :1,3,5,7,…,37,39)
-    {0xc2, -1, 1, 0, -1, 1099511627775, 7, 1, 1, 6}, // (subframe number :0,1,2,…,39)
+    {0xc2, -1, 1, 0, -1, 733007751850, 0, 1, 2, 6}, // (subframe number :1,3,5,7,��,37,39)
+    {0xc2, -1, 1, 0, -1, 1099511627775, 7, 1, 1, 6}, // (subframe number :0,1,2,��,39)
     {0xa1, 0xb1, 16, 1, -1, 567489872400, 2, 1, 6, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa1, 0xb1, 16, 1, -1, 586406201480, 2, 1, 6, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa1, 0xb1, 8, 1, -1, 567489872400, 2, 1, 6, 2}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1475,7 +1479,7 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa1, 0xb1, 1, 0, -1, 567489872400, 8, 1, 3, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa1, 0xb1, 1, 0, -1, 567489872400, 2, 1, 6, 2}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa1, 0xb1, 1, 0, -1, 586406201480, 2, 1, 6, 2}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa1, 0xb1, 1, 0, -1, 733007751850, 2, 1, 6, 2}, // (subframe number :1,3,5,7,…,37,39)
+    {0xa1, 0xb1, 1, 0, -1, 733007751850, 2, 1, 6, 2}, // (subframe number :1,3,5,7,��,37,39)
     {0xa2, 0xb2, 16, 1, -1, 567489872400, 2, 1, 3, 4}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa2, 0xb2, 16, 1, -1, 586406201480, 2, 1, 3, 4}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa2, 0xb2, 8, 1, -1, 567489872400, 2, 1, 3, 4}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1493,7 +1497,7 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa2, 0xb2, 1, 0, -1, 567489872400, 6, 1, 2, 4}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa2, 0xb2, 1, 0, -1, 567489872400, 2, 1, 3, 4}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa2, 0xb2, 1, 0, -1, 586406201480, 2, 1, 3, 4}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa2, 0xb2, 1, 0, -1, 733007751850, 2, 1, 3, 4}, // (subframe number :1,3,5,7,…,37,39)
+    {0xa2, 0xb2, 1, 0, -1, 733007751850, 2, 1, 3, 4}, // (subframe number :1,3,5,7,��,37,39)
     {0xa3, 0xb3, 16, 1, -1, 567489872400, 2, 1, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa3, 0xb3, 16, 1, -1, 586406201480, 2, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
     {0xa3, 0xb3, 8, 1, -1, 567489872400, 2, 1, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
@@ -1511,7 +1515,7 @@ static const int64_t table_6_3_3_2_4_prachConfig_Index[256][10] = {
     {0xa3, 0xb3, 1, 0, -1, 567489872400, 2, 1, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa3, 0xb3, 1, 0, -1, 567489872400, 2, 2, 2, 6}, // (subframe number :4,9,14,19,24,29,34,39)
     {0xa3, 0xb3, 1, 0, -1, 586406201480, 2, 1, 2, 6}, // (subframe number :3,7,11,15,19,23,27,31,35,39)
-    {0xa3, 0xb3, 1, 0, -1, 733007751850, 2, 1, 2, 6} // (subframe number :1,3,5,7,…,37,39)
+    {0xa3, 0xb3, 1, 0, -1, 733007751850, 2, 1, 2, 6} // (subframe number :1,3,5,7,��,37,39)
 };
 
 int get_format0(uint8_t index,
@@ -2927,8 +2931,8 @@ uint8_t compute_srs_resource_indicator(NR_PUSCH_ServingCellConfig_t *pusch_servi
       // for non-codebook based operation.
       int Lmax = 0;
       if (pusch_servingcellconfig != NULL) {
-        if (pusch_servingcellconfig->ext1->maxMIMO_Layers != NULL) {
-          Lmax = *pusch_servingcellconfig->ext1->maxMIMO_Layers;
+        if (pusch_servingcellconfig->maxMIMO_Layers != NULL) {
+          Lmax = *pusch_servingcellconfig->maxMIMO_Layers;
         } else {
           AssertFatal(1 == 0, "MIMO on PUSCH not supported, maxMIMO_Layers needs to be set to 1\n");
         }
@@ -3003,7 +3007,7 @@ uint8_t compute_precoding_information(NR_PUSCH_Config_t *pusch_Config,
   }
 
   long max_rank = *pusch_Config->maxRank;
-  long *ul_FullPowerTransmission = pusch_Config->ext1 ? pusch_Config->ext1->ul_FullPowerTransmission_r16 : NULL;
+  long *ul_FullPowerTransmission = pusch_Config->ul_FullPowerTransmission_r16 ;
   long *codebookSubset = pusch_Config->codebookSubset;
 
   if (pusch_antenna_ports == 2) {
@@ -3015,7 +3019,7 @@ uint8_t compute_precoding_information(NR_PUSCH_Config_t *pusch_Config,
       // - 2 bits according to Table 7.3.1.1.2-5A for 2 antenna ports, if txConfig = codebook, ul-FullPowerTransmission =
       //   fullpowerMode1, maxRank=1, and according to whether transform precoder is enabled or disabled, and the values
       //   of higher layer parameter codebookSubset;
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         nbits = 2;
         if (val && srs_feedback) {
           AssertFatal(srs_feedback->tpmi <= 2,"TPMI %d is invalid!\n", srs_feedback->tpmi);
@@ -3042,7 +3046,7 @@ uint8_t compute_precoding_information(NR_PUSCH_Config_t *pusch_Config,
       //   precoder is enabled or disabled, and the values of higher layer parameters maxRank and codebookSubset;
       // - 2 bits according to Table 7.3.1.1.2-4A for 2 antenna ports, if txConfig = codebook, ul-FullPowerTransmission =
       //   fullpowerMode1, transform precoder is disabled, maxRank=2, and codebookSubset=nonCoherent;
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         nbits = 2;
         if (val && srs_feedback) {
           AssertFatal((*nrOfLayers==1 && srs_feedback->tpmi <= 2) || (*nrOfLayers==2 && srs_feedback->tpmi == 0),
@@ -3078,7 +3082,7 @@ uint8_t compute_precoding_information(NR_PUSCH_Config_t *pusch_Config,
       // - 3 or 4 bits according to Table 7.3.1.1.2-3A for 4 antenna ports, if txConfig = codebook, ul-FullPowerTransmission =
       //   fullpowerMode1, maxRank=1, and according to whether transform precoder is enabled or disabled, and the values
       //   of higher layer parameter codebookSubset;
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
           nbits = 3;
           if (val && srs_feedback) {
@@ -3124,7 +3128,7 @@ uint8_t compute_precoding_information(NR_PUSCH_Config_t *pusch_Config,
       // - 4 or 6 bits according to Table 7.3.1.1.2-2B for 4 antenna ports, if txConfig = codebook, ul-FullPowerTransmission =
       //   fullpowerMode1, maxRank=3 or 4, transform precoder is disabled, and according to the values of higher layer
       //   parameter codebookSubset;
-      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ext1__ul_FullPowerTransmission_r16_fullpowerMode1) {
+      if (ul_FullPowerTransmission && *ul_FullPowerTransmission == NR_PUSCH_Config__ul_FullPowerTransmission_r16_fullpowerMode1) {
         if (max_rank == 2) {
           if (codebookSubset && *codebookSubset == NR_PUSCH_Config__codebookSubset_nonCoherent) {
             nbits = 4;
@@ -3426,7 +3430,7 @@ uint16_t nr_dci_size(const NR_UE_DL_BWP_t *DL_BWP,
       }
       // CBGTI
       if (UL_BWP->pusch_servingcellconfig && UL_BWP->pusch_servingcellconfig->codeBlockGroupTransmission != NULL) {
-        int num = UL_BWP->pusch_servingcellconfig->codeBlockGroupTransmission->choice.setup->maxCodeBlockGroupsPerTransportBlock;
+        int num = ((NR_PUSCH_CodeBlockGroupTransmission_t*)UL_BWP->pusch_servingcellconfig->codeBlockGroupTransmission->choice.setup)->maxCodeBlockGroupsPerTransportBlock;
         dci_pdu->cbgti.nbits = 2 + (num<<1);
         size += dci_pdu->cbgti.nbits;
       }
@@ -3444,7 +3448,7 @@ uint16_t nr_dci_size(const NR_UE_DL_BWP_t *DL_BWP,
       // beta offset indicator
       if (pusch_Config &&
           pusch_Config->uci_OnPUSCH!=NULL){
-        if (pusch_Config->uci_OnPUSCH->choice.setup->betaOffsets->present == NR_UCI_OnPUSCH__betaOffsets_PR_dynamic) {
+        if (((NR_UCI_OnPUSCH_t*)pusch_Config->uci_OnPUSCH->choice.setup)->betaOffsets->present == NR_UCI_OnPUSCH__betaOffsets_PR_dynamic) {
           dci_pdu->beta_offset_indicator.nbits = 2;
           size += dci_pdu->beta_offset_indicator.nbits;
         }
@@ -3578,13 +3582,13 @@ uint16_t nr_dci_size(const NR_UE_DL_BWP_t *DL_BWP,
       size += dci_pdu->srs_request.nbits;
       // CBGTI
       if (DL_BWP->pdsch_servingcellconfig && DL_BWP->pdsch_servingcellconfig->codeBlockGroupTransmission != NULL) {
-        uint8_t maxCBGperTB = (DL_BWP->pdsch_servingcellconfig->codeBlockGroupTransmission->choice.setup->maxCodeBlockGroupsPerTransportBlock + 1) * 2;
+        uint8_t maxCBGperTB = (((NR_PDSCH_CodeBlockGroupTransmission_t*)DL_BWP->pdsch_servingcellconfig->codeBlockGroupTransmission->choice.setup)->maxCodeBlockGroupsPerTransportBlock + 1) * 2;
         long *maxCWperDCI_rrc = pdsch_Config->maxNrofCodeWordsScheduledByDCI;
         uint8_t maxCW = (maxCWperDCI_rrc == NULL) ? 1 : *maxCWperDCI_rrc;
         dci_pdu->cbgti.nbits = maxCBGperTB * maxCW;
         size += dci_pdu->cbgti.nbits;
         // CBGFI
-        if (DL_BWP->pdsch_servingcellconfig->codeBlockGroupTransmission->choice.setup->codeBlockGroupFlushIndicator) {
+        if (((NR_PDSCH_CodeBlockGroupTransmission_t*)DL_BWP->pdsch_servingcellconfig->codeBlockGroupTransmission->choice.setup)->codeBlockGroupFlushIndicator) {
           dci_pdu->cbgfi.nbits = 1;
           size += dci_pdu->cbgfi.nbits;
         }
@@ -3641,16 +3645,14 @@ bool is_nr_DL_slot(NR_TDD_UL_DL_ConfigCommon_t *tdd_UL_DL_ConfigurationCommon,sl
     return true;
 
   int period1, period2 = 0;
-  if (tdd_UL_DL_ConfigurationCommon->pattern1.ext1 &&
-      tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530)
-    period1 = 3000+*tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530;
+  if (tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity_v1530)
+    period1 = 3000+*tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity_v1530;
   else
     period1 = tdd_period_to_num[tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity];
 			       
   if (tdd_UL_DL_ConfigurationCommon->pattern2) {
-    if (tdd_UL_DL_ConfigurationCommon->pattern2->ext1 &&
-        tdd_UL_DL_ConfigurationCommon->pattern2->ext1->dl_UL_TransmissionPeriodicity_v1530)
-      period2 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern2->ext1->dl_UL_TransmissionPeriodicity_v1530;
+    if (tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity_v1530)
+      period2 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity_v1530;
     else
       period2 = tdd_period_to_num[tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity];
   }    
@@ -3676,16 +3678,14 @@ bool is_nr_UL_slot(NR_TDD_UL_DL_ConfigCommon_t *tdd_UL_DL_ConfigurationCommon, s
     return false;
 
   int period1, period2 = 0;
-  if (tdd_UL_DL_ConfigurationCommon->pattern1.ext1 &&
-      tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530)
-    period1 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern1.ext1->dl_UL_TransmissionPeriodicity_v1530;
+  if (tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity_v1530)
+    period1 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity_v1530;
   else
     period1 = tdd_period_to_num[tdd_UL_DL_ConfigurationCommon->pattern1.dl_UL_TransmissionPeriodicity];
 			       
   if (tdd_UL_DL_ConfigurationCommon->pattern2) {
-    if (tdd_UL_DL_ConfigurationCommon->pattern2->ext1 &&
-	      tdd_UL_DL_ConfigurationCommon->pattern2->ext1->dl_UL_TransmissionPeriodicity_v1530)
-      period2 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern2->ext1->dl_UL_TransmissionPeriodicity_v1530;
+    if (tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity_v1530)
+      period2 = 3000 + *tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity_v1530;
     else
       period2 = tdd_period_to_num[tdd_UL_DL_ConfigurationCommon->pattern2->dl_UL_TransmissionPeriodicity];
   }    

@@ -534,7 +534,6 @@ static void config_srs(const NR_ServingCellConfigCommon_t *scc,
     srs_resset0->resourceType.choice.aperiodic->csi_RS=NULL;
     srs_resset0->resourceType.choice.aperiodic->slotOffset = calloc(1,sizeof(*srs_resset0->resourceType.choice.aperiodic->slotOffset));
     *srs_resset0->resourceType.choice.aperiodic->slotOffset = 2;
-    srs_resset0->resourceType.choice.aperiodic->ext1 = NULL;
   }
   srs_resset0->usage=NR_SRS_ResourceSet__usage_codebook;
   srs_resset0->alpha = calloc(1,sizeof(*srs_resset0->alpha));
@@ -1222,7 +1221,6 @@ static void config_downlinkBWP(NR_BWP_Downlink_t *bwp,
     bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=calloc(1,sizeof(*bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace));
     *bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=ss->searchSpaceId;
   }
-  bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ext1=NULL;
   bwp->bwp_Common->pdsch_ConfigCommon=calloc(1,sizeof(*bwp->bwp_Common->pdsch_ConfigCommon));
   bwp->bwp_Common->pdsch_ConfigCommon->present = NR_SetupRelease_PDSCH_ConfigCommon_PR_setup;
   bwp->bwp_Common->pdsch_ConfigCommon->choice.setup = calloc(1,sizeof(*bwp->bwp_Common->pdsch_ConfigCommon->choice.setup));
@@ -1321,9 +1319,8 @@ static void config_uplinkBWP(NR_BWP_Uplink_t *ubwp,
   long maxMIMO_Layers = servingcellconfigdedicated &&
                                 servingcellconfigdedicated->uplinkConfig
                                 && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig
-                                && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1
-                                && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers ?
-                            *servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers : 1;
+                                && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers ?
+                            *servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers : 1;
 
   ubwp->bwp_Dedicated->srs_Config = calloc(1,sizeof(*ubwp->bwp_Dedicated->srs_Config));
   config_srs(scc,
@@ -1556,7 +1553,6 @@ static void config_csi_meas_report(NR_CSI_MeasConfig_t *csi_MeasConfig,
     *csirep->cqi_Table = NR_CSI_ReportConfig__cqi_Table_table1;
   csirep->subbandSize = NR_CSI_ReportConfig__subbandSize_value2;
   csirep->non_PMI_PortIndication = NULL;
-  csirep->ext1 = NULL;
   asn1cSeqAdd(&csi_MeasConfig->csi_ReportConfigToAddModList->list, csirep);
 }
 
@@ -1718,7 +1714,7 @@ int encode_MIB_NR(NR_BCCH_BCH_Message_t *mib, int frame, uint8_t *buf, int buf_s
   uint8_t sfn_msb = (uint8_t)((frame >> 4) & 0x3f);
   *mib->message.choice.mib->systemFrameNumber.buf = sfn_msb << 2;
 
-  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_BCCH_BCH_Message, NULL, mib, buf, buf_size);
+  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_BCCH_BCH_Message, mib, buf, buf_size);
   AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n", enc_rval.failed_type->name, enc_rval.encoded);
   LOG_D(NR_RRC, "Encoded MIB for frame %d sfn_msb %d, bits %lu\n", frame, sfn_msb, enc_rval.encoded);
   return (enc_rval.encoded + 7) / 8;
@@ -2032,7 +2028,7 @@ int encode_SIB1_NR(NR_BCCH_DL_SCH_Message_t *sib1, uint8_t *buffer, int max_buff
               "%s(): maximum buffer size too large: 3GPP TS 38.331 section 5.2.1 - The physical layer imposes a limit to the "
               "maximum size a SIB can take. The maximum SIB1 or SI message size is 2976 bits.\n",
               __func__);
-  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_BCCH_DL_SCH_Message, NULL, sib1, buffer, max_buffer_size);
+  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_BCCH_DL_SCH_Message, sib1, buffer, max_buffer_size);
   AssertFatal(enc_rval.encoded > 0 && enc_rval.encoded <= max_buffer_size * 8, "ASN1 message encoding failed (%s, %lu)!\n", enc_rval.failed_type->name, enc_rval.encoded);
   return (enc_rval.encoded + 7) / 8;
 }
@@ -2071,7 +2067,6 @@ static NR_MAC_CellGroupConfig_t *configure_mac_cellgroup(void)
   asn1cSeqAdd(&(mac_CellGroupConfig->schedulingRequestConfig->schedulingRequestToAddModList->list),schedulingrequestlist);
 
   mac_CellGroupConfig->skipUplinkTxDynamic=false;
-  mac_CellGroupConfig->ext1 = NULL;
   return mac_CellGroupConfig;
 }
 
@@ -2111,9 +2106,8 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   initialUplinkBWP->pusch_Config = config_pusch(NULL, scc, NULL);
 
   long maxMIMO_Layers = uplinkConfig && uplinkConfig->pusch_ServingCellConfig
-                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1
-                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
-                            ? *uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
+                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
+                            ? *uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
                             : 1;
 
   // We are using do_srs = 0 here because the periodic SRS will only be enabled in update_cellGroupConfig() if do_srs == 1
@@ -2309,9 +2303,8 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH = calloc(1, sizeof(*pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH));
   *pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH = NR_PDSCH_ServingCellConfig__nrofHARQ_ProcessesForPDSCH_n16;
   pdsch_servingcellconfig->pucch_Cell = NULL;
-  pdsch_servingcellconfig->ext1 = calloc(1, sizeof(*pdsch_servingcellconfig->ext1));
-  pdsch_servingcellconfig->ext1->maxMIMO_Layers = calloc(1, sizeof(*pdsch_servingcellconfig->ext1->maxMIMO_Layers));
-  *pdsch_servingcellconfig->ext1->maxMIMO_Layers = 2;
+  pdsch_servingcellconfig->maxMIMO_Layers = calloc(1, sizeof(*pdsch_servingcellconfig->maxMIMO_Layers));
+  *pdsch_servingcellconfig->maxMIMO_Layers = 2;
 
   if (LOG_DEBUGFLAG(DEBUG_ASN1)) {
     xer_fprint(stdout, &asn_DEF_NR_SpCellConfig, SpCellConfig);
@@ -2407,18 +2400,15 @@ void update_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig,
       uplinkConfig->pusch_ServingCellConfig = calloc(1, sizeof(*uplinkConfig->pusch_ServingCellConfig));
       uplinkConfig->pusch_ServingCellConfig->present = NR_SetupRelease_PUSCH_ServingCellConfig_PR_setup;
       uplinkConfig->pusch_ServingCellConfig->choice.setup = calloc(1, sizeof(*uplinkConfig->pusch_ServingCellConfig->choice.setup));
-      uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1 =
-          calloc(1, sizeof(*uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1));
-      uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers =
-          calloc(1, sizeof(*uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers));
+      uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers =
+          calloc(1, sizeof(*uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers));
     }
-    *uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers = ul_max_layers;
+    *uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers = ul_max_layers;
   }
 
   long maxMIMO_Layers = uplinkConfig && uplinkConfig->pusch_ServingCellConfig
-                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1
-                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
-                            ? *uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
+                                && uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
+                            ? *uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
                             : 1;
 
   // UL and SRS configuration
@@ -2481,7 +2471,7 @@ void free_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig)
 
 int encode_cellGroupConfig(NR_CellGroupConfig_t *cellGroupConfig, uint8_t *buffer, int max_buffer_size)
 {
-  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, NULL, cellGroupConfig, buffer, max_buffer_size);
+  asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CellGroupConfig, cellGroupConfig, buffer, max_buffer_size);
   AssertFatal(enc_rval.encoded > 0 && enc_rval.encoded <= max_buffer_size * 8,
               "ASN1 message encoding failed (%s, %lu)!\n",
               enc_rval.failed_type->name,
@@ -2579,7 +2569,6 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
       (get_softmodem_params()->phy_test == 1) ? 0x1234 : (taus() & 0xffff);
   reconfigurationWithSync->t304 = NR_ReconfigurationWithSync__t304_ms2000;
   reconfigurationWithSync->rach_ConfigDedicated = NULL;
-  reconfigurationWithSync->ext1 = NULL;
 
   // For 2-step contention-free random access procedure
   reconfigurationWithSync->rach_ConfigDedicated = calloc(1, sizeof(*reconfigurationWithSync->rach_ConfigDedicated));
@@ -2612,7 +2601,6 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
     }
   }
 
-  secondaryCellGroup->spCellConfig->reconfigurationWithSync->rach_ConfigDedicated->choice.uplink->cfra->ext1 = NULL;
 
   secondaryCellGroup->spCellConfig->rlf_TimersAndConstants =
       calloc(1, sizeof(*secondaryCellGroup->spCellConfig->rlf_TimersAndConstants));
@@ -2622,10 +2610,8 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
   secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->t310 = NR_RLF_TimersAndConstants__t310_ms4000;
   secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->n310 = NR_RLF_TimersAndConstants__n310_n20;
   secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->n311 = NR_RLF_TimersAndConstants__n311_n1;
-  secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->ext1 =
-      calloc(1, sizeof(*secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->ext1));
-  secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->ext1->t311 =
-      NR_RLF_TimersAndConstants__ext1__t311_ms30000;
+  secondaryCellGroup->spCellConfig->rlf_TimersAndConstants->choice.setup->t311 =
+      NR_RLF_TimersAndConstants__t311_ms30000;
   secondaryCellGroup->spCellConfig->rlmInSyncOutOfSyncThreshold = NULL;
 
   secondaryCellGroup->spCellConfig->spCellConfigDedicated =
@@ -2663,9 +2649,8 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
 
   long maxMIMO_Layers =
       servingcellconfigdedicated->uplinkConfig && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig
-              && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1
-              && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
-          ? *servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->ext1->maxMIMO_Layers
+              && servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
+          ? *servingcellconfigdedicated->uplinkConfig->pusch_ServingCellConfig->choice.setup->maxMIMO_Layers
           : 1;
 
   int curr_bwp = NRRIV2BW(servingcellconfigcommon->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth,
@@ -2738,10 +2723,9 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
   pusch_scc->codeBlockGroupTransmission = NULL;
   pusch_scc->rateMatching = NULL;
   pusch_scc->xOverhead = NULL;
-  pusch_scc->ext1 = calloc(1, sizeof(*pusch_scc->ext1));
-  pusch_scc->ext1->maxMIMO_Layers = calloc(1, sizeof(*pusch_scc->ext1->maxMIMO_Layers));
-  *pusch_scc->ext1->maxMIMO_Layers = 1;
-  pusch_scc->ext1->processingType2Enabled = NULL;
+  pusch_scc->maxMIMO_Layers = calloc(1, sizeof(*pusch_scc->maxMIMO_Layers));
+  *pusch_scc->maxMIMO_Layers = 1;
+  pusch_scc->processingType2Enabled = NULL;
 
   secondaryCellGroup->spCellConfig->spCellConfigDedicated->uplinkConfig->carrierSwitching = NULL;
   secondaryCellGroup->spCellConfig->spCellConfigDedicated->supplementaryUplink = NULL;
@@ -2758,10 +2742,9 @@ NR_CellGroupConfig_t *get_default_secondaryCellGroup(const NR_ServingCellConfigC
   pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH = calloc(1, sizeof(*pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH));
   *pdsch_servingcellconfig->nrofHARQ_ProcessesForPDSCH = NR_PDSCH_ServingCellConfig__nrofHARQ_ProcessesForPDSCH_n16;
   pdsch_servingcellconfig->pucch_Cell = NULL;
-  pdsch_servingcellconfig->ext1 = calloc(1, sizeof(*pdsch_servingcellconfig->ext1));
-  pdsch_servingcellconfig->ext1->maxMIMO_Layers = calloc(1, sizeof(*pdsch_servingcellconfig->ext1->maxMIMO_Layers));
-  *pdsch_servingcellconfig->ext1->maxMIMO_Layers = NR_MAX_SUPPORTED_DL_LAYERS;
-  pdsch_servingcellconfig->ext1->processingType2Enabled = NULL;
+  pdsch_servingcellconfig->maxMIMO_Layers = calloc(1, sizeof(*pdsch_servingcellconfig->maxMIMO_Layers));
+  *pdsch_servingcellconfig->maxMIMO_Layers = NR_MAX_SUPPORTED_DL_LAYERS;
+  pdsch_servingcellconfig->processingType2Enabled = NULL;
 
   secondaryCellGroup->spCellConfig->spCellConfigDedicated->csi_MeasConfig = NULL;
   secondaryCellGroup->spCellConfig->spCellConfigDedicated->csi_MeasConfig =

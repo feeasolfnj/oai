@@ -6248,8 +6248,8 @@ VolumeTimedReportList ::= SEQUENCE (SIZE(1..maxnoofTimePeriods)) OF VolumeTimedR
 VolumeTimedReport-Item ::= SEQUENCE {
 	startTimeStamp				OCTET STRING (SIZE(4)),
 	endTimeStamp				OCTET STRING (SIZE(4)),
-	usageCountUL				INTEGER (0..18446744073709551615),
-	usageCountDL				INTEGER (0..18446744073709551615),
+	usageCountUL				INTEGER (0..9223372036854775807),
+	usageCountDL				INTEGER (0..9223372036854775807),
 	iE-Extensions		ProtocolExtensionContainer { {VolumeTimedReport-Item-ExtIEs} } OPTIONAL,
 ...
 }

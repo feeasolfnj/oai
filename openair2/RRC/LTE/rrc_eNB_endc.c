@@ -221,7 +221,6 @@ int rrc_eNB_generate_RRCConnectionReconfiguration_endc(protocol_ctxt_t *ctxt,
 #endif
 
   enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_DL_DCCH_Message,
-                                   NULL,
                                    (void *)&dl_dcch_msg,
                                    buffer,
                                    buffer_size);

@@ -90,14 +90,20 @@ static bool nr_ue_postDecode(PHY_VARS_NR_UE *phy_vars_ue,
 
   bool decodeSuccess = (rdata->decodeIterations < (1+dlsch->max_ldpc_iterations));
 
+  LOG_I(PHY, "nr_ue_postDecode: seg=%d decodeIterations=%d maxIter=%d decodeSuccess=%d Kr_bytes=%d F=%d C=%d offset=%d\n",
+        r, rdata->decodeIterations, dlsch->max_ldpc_iterations, decodeSuccess, rdata->Kr_bytes, harq_process->F, harq_process->C, rdata->offset);
+
   if (decodeSuccess) {
     memcpy(b+rdata->offset,
            harq_process->c[r],
            rdata->Kr_bytes - (harq_process->F>>3) -((harq_process->C>1)?3:0));
 
+    LOG_I(PHY, "nr_ue_postDecode: c[%d] first 16 bytes: ", r);
+    for (int kk=0; kk<16 && kk<rdata->Kr_bytes; kk++) LOG_I(PHY, "%02x ", harq_process->c[r][kk]);
+    LOG_I(PHY, "\n");
     (*num_seg_ok)++;
   } else {
-    LOG_D(PHY, "DLSCH %d in error\n", rdata->dlsch_id);
+    LOG_E(PHY, "DLSCH %d in error (decodeIterations=%d >= max=%d)\n", rdata->dlsch_id, rdata->decodeIterations, dlsch->max_ldpc_iterations);
   }
 
   // if all segments are done
@@ -194,6 +200,10 @@ static void nr_processDLSegment(void *arg)
                          Qm,
                          w, // [hna] w is e
                          dlsch_llr+r_offset);
+  // [DEBUG-RISCV] Checkpoint D: after deinterleaving, w[] should be non-zero
+  LOG_I(PHY, "[CKPT-D] post-deinterleave w first 8 (E=%u, Qm=%u): ", E, Qm);
+  for (int _ck=0; _ck<8; _ck++) LOG_I(PHY, "%d ", w[_ck]);
+  LOG_I(PHY, "\n");
   //VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_DLSCH_DEINTERLEAVING, VCD_FUNCTION_OUT);
   stop_meas(&rdata->ts_deinterleave);
 
@@ -266,12 +276,37 @@ static void nr_processDLSegment(void *arg)
       pl[j] = _mm_packs_epi16(pv[i],pv[i+1]);
     }
 
-    //VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_DLSCH_LDPC, VCD_FUNCTION_IN);
+    // Debug: check LLR values at each stage
+    // [DEBUG-RISCV] Print ALL stages in the KNOWN-WORKING LDPC debug block
+    // dlsch_llr = raw input to this segment (comes from llr[0] after unscramble+deint offset)
+    // w = after nr_deinterleaving_ldpc (= CKPT-D)
+    // harq_process->d[r] = after nr_rate_matching_ldpc_rx (rate unmatching output)
+    LOG_I(PHY, "LDPC debug: dlsch_llr first 8 (raw input): ");
+    for (int kk=0; kk<8; kk++) LOG_I(PHY, "%d ", (dlsch_llr+r_offset)[kk]);
+    LOG_I(PHY, "\n");
+    LOG_I(PHY, "LDPC debug: w first 8 (post-deinterleave, CKPT-D): ");
+    for (int kk=0; kk<8; kk++) LOG_I(PHY, "%d ", w[kk]);
+    LOG_I(PHY, "\n");
+    LOG_I(PHY, "LDPC debug: d[r] first 8 (16-bit, post-ratematch): ");
+    for (int kk=0; kk<8; kk++) LOG_I(PHY, "%d ", harq_process->d[r][kk]);
+    LOG_I(PHY, "\n");
+    LOG_I(PHY, "LDPC debug: z first 8 (16-bit, pre-packs_epi16): ");
+    for (int kk=0; kk<8; kk++) LOG_I(PHY, "%d ", z[kk]);
+    LOG_I(PHY, "\n");
+    LOG_I(PHY, "LDPC debug: l (8-bit saturated) first 16: ");
+    for (int kk=0; kk<16; kk++) LOG_I(PHY, "%d ", ((int8_t*)&l[0])[kk]);
+    LOG_I(PHY, "\n");
+
+    //VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BYNAME(VCD_SIGNAL_DUMPER_FUNCTIONS_DLSCH_LDPC, VCD_FUNCTION_IN);
     p_decoderParms->block_length=length_dec;
     nrLDPC_initcall(p_decoderParms, (int8_t*)&pl[0], LDPCoutput);
     p_decoderParms->crc_type = crc_type;
     rdata->decodeIterations = nrLDPC_decoder(p_decoderParms, (int8_t *)&pl[0], LDPCoutput, &procTime, &harq_process->abort_decode);
     //VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(VCD_SIGNAL_DUMPER_FUNCTIONS_DLSCH_LDPC, VCD_FUNCTION_OUT);
+
+    LOG_I(PHY, "LDPC debug: decodeIterations=%d, LDPCoutput first 16 bytes: ", rdata->decodeIterations);
+    for (int kk=0; kk<16; kk++) LOG_I(PHY, "%02x ", ((uint8_t*)LDPCoutput)[kk]);
+    LOG_I(PHY, "\n");
 
     if (rdata->decodeIterations <= dlsch->max_ldpc_iterations)
       memcpy(harq_process->c[r], LDPCoutput, Kr >> 3);
@@ -408,7 +443,7 @@ uint32_t nr_dlsch_decoding(PHY_VARS_NR_UE *phy_vars_ue,
   //printf("dlsch decoding nr segmentation Z %d\n", p_decParams->Z);
   //printf("coderate %f kc %d \n", Coderate, kc);
   p_decParams->numMaxIter = dlsch->max_ldpc_iterations;
-  p_decParams->outMode= 0;
+  p_decParams->outMode= nrLDPC_outMode_BIT; // 0 = bit-packed (32 bits per uint32_t) for MAC layer
   r_offset = 0;
   uint16_t a_segments = MAX_NUM_NR_DLSCH_SEGMENTS_PER_LAYER*dlsch->Nl;  //number of segments to be allocated
 

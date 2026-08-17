@@ -340,8 +340,9 @@ void init_SL_preconfig(UE_RRC_INST *UE, const uint8_t eNB_index ) {
   UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.filterCoefficient_r12     = LTE_FilterCoefficient_fc0;
   UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.syncRefMinHyst_r12        = LTE_SL_PreconfigSync_r12__syncRefMinHyst_r12_dB0;
   UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.syncRefDiffHyst_r12       = LTE_SL_PreconfigSync_r12__syncRefDiffHyst_r12_dB0;
-  UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.ext1                      = malloc16_clear(sizeof(struct LTE_SL_PreconfigSync_r12__ext1));
-  UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.ext1->syncTxPeriodic_r13  = NULL;
+  /* syncTxPeriodic_r13 is a direct member of LTE_SL_PreconfigSync_r12 (no ext1
+   * wrapper in the generated struct); initialise the OPTIONAL pointer to NULL. */
+  UE->SL_Preconfiguration[eNB_index]->preconfigSync_r12.syncTxPeriodic_r13        = NULL;
   struct LTE_SL_PreconfigCommPool_r12 *preconfigpool = malloc16_clear(sizeof(struct LTE_SL_PreconfigCommPool_r12));
   preconfigpool->sc_CP_Len_r12                                                    = LTE_SL_CP_Len_r12_normal;
   preconfigpool->sc_Period_r12                                                    = LTE_SL_PeriodComm_r12_sf40;
@@ -388,8 +389,9 @@ void init_SL_preconfig(UE_RRC_INST *UE, const uint8_t eNB_index ) {
   preconfigpool->dataHoppingConfig_r12.rb_Offset_r12                                = 0;
   preconfigpool->dataTxParameters_r12                                               = 0;
   asn1cSeqAdd(&UE->SL_Preconfiguration[eNB_index]->preconfigComm_r12.list,preconfigpool);
-  // Rel13 extensions
-  UE->SL_Preconfiguration[eNB_index]->ext1 = NULL;
+  // Rel13 extensions (preconfigComm_v1310 / preconfigDisc_r13 / preconfigRelay_r13)
+  // are direct members of LTE_SL_Preconfiguration_r12 (no ext1 wrapper in the
+  // generated struct); already NULL from malloc16_clear() above.
 }
 
 
@@ -844,7 +846,6 @@ rrc_ue_process_measConfig(
             }
             uint8_t buffer[RRC_BUF_SIZE];
             asn_enc_rval_t enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_MeasObjectToAddMod,
-                                                            NULL,
                                                             measObj,
                                                             buffer,
                                                             sizeof(buffer));
@@ -1605,7 +1606,6 @@ rrc_ue_process_securityModeCommand(
     LOG_I(RRC,"[UE %d] SFN/SF %d/%d: Receiving from SRB1 (DL-DCCH), encoding securityModeComplete (eNB %d), rrc_TransactionIdentifier: %ld\n",
           ctxt_pP->module_id,ctxt_pP->frame, ctxt_pP->subframe, eNB_index, securityModeCommand->rrc_TransactionIdentifier);
     enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message,
-                                     NULL,
                                      (void *)&ul_dcch_msg,
                                      buffer,
                                      100);
@@ -1671,7 +1671,7 @@ rrc_ue_process_MBMSCountingRequest(
 //        &CountingResponse);
 //
 
-  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, NULL, (void *) &ul_dcch_msg, buffer, 100);
+  enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, (void *) &ul_dcch_msg, buffer, 100);
       AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                    enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -1729,7 +1729,6 @@ rrc_ue_process_nrueCapabilityEnquiry(
   uint8_t buffer_mrdc[RRC_BUF_SIZE];
   NR_UE_MRDC_Capability_t *UE_Capability_MRDC = CALLOC(1, sizeof(NR_UE_MRDC_Capability_t));
   asn_enc_rval_t enc_rval_mrdc = uper_encode_to_buffer(&asn_DEF_NR_UE_MRDC_Capability,
-                                   NULL,
                                    (void *)UE_Capability_MRDC,
                                    &buffer_mrdc,
                                    sizeof(buffer_mrdc));
@@ -1756,7 +1755,7 @@ rrc_ue_process_nrueCapabilityEnquiry(
         asn1cSeqAdd(&ue_cap->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list,
                          &ue_CapabilityRAT_Container);
         ue_cap->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list.array[i]->rat_Type = LTE_RAT_Type_nr;
-        asn_enc_rval_t enc_rval_nr = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, NULL, (void *) &ul_dcch_msg, buffer, sizeof(buffer));
+        asn_enc_rval_t enc_rval_nr = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, (void *) &ul_dcch_msg, buffer, sizeof(buffer));
         AssertFatal (enc_rval_nr.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                      enc_rval_nr.failed_type->name, enc_rval_nr.encoded);
         enc_rval.encoded = enc_rval.encoded + enc_rval_nr.encoded;
@@ -1768,7 +1767,7 @@ rrc_ue_process_nrueCapabilityEnquiry(
         asn1cSeqAdd(&ue_cap->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list,
                          &ue_CapabilityRAT_Container_mrdc);
         ue_cap->criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list.array[i]->rat_Type = LTE_RAT_Type_eutra_nr;
-        asn_enc_rval_t enc_rval_eutra_nr = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, NULL, (void *) &ul_dcch_msg, buffer, sizeof(buffer));
+        asn_enc_rval_t enc_rval_eutra_nr = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, (void *) &ul_dcch_msg, buffer, sizeof(buffer));
         AssertFatal (enc_rval_eutra_nr.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                      enc_rval_eutra_nr.failed_type->name, enc_rval_eutra_nr.encoded);
         enc_rval.encoded = enc_rval.encoded + enc_rval_eutra_nr.encoded;
@@ -1838,7 +1837,7 @@ rrc_ue_process_ueCapabilityEnquiry(
       asn1cSeqAdd(
         &ul_dcch_msg.message.choice.c1.choice.ueCapabilityInformation.criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list,
         &ue_CapabilityRAT_Container);
-      enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, NULL, (void *) &ul_dcch_msg, buffer, 100);
+      enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, (void *) &ul_dcch_msg, buffer, 100);
       AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                    enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -1862,7 +1861,7 @@ rrc_ue_process_ueCapabilityEnquiry(
         asn1cSeqAdd(
           &ul_dcch_msg.message.choice.c1.choice.ueCapabilityInformation.criticalExtensions.choice.c1.choice.ueCapabilityInformation_r8.ue_CapabilityRAT_ContainerList.list,
           &ue_CapabilityRAT_Container);
-        enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, NULL, (void *) &ul_dcch_msg, buffer, 100);
+        enc_rval = uper_encode_to_buffer(&asn_DEF_LTE_UL_DCCH_Message, (void *) &ul_dcch_msg, buffer, 100);
         AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                     enc_rval.failed_type->name, enc_rval.encoded);
 
@@ -3556,33 +3555,33 @@ void dump_sib2( LTE_SystemInformationBlockType2_t *sib2 ) {
   } else
     LOG_I( RRC, "lateNonCriticalExtension : not defined\n" );
 
-  if (sib2->ext1 && sib2->ext1->ssac_BarringForMMTEL_Voice_r9) {
+  if (sib2->ssac_BarringForMMTEL_Voice_r9) {
     LOG_I( RRC, "ssac_BarringForMMTEL_Voice_r9->ac_BarringFactor       : %ld\n",
-           sib2->ext1->ssac_BarringForMMTEL_Voice_r9->ac_BarringFactor );
+           sib2->ssac_BarringForMMTEL_Voice_r9->ac_BarringFactor );
     LOG_I( RRC, "ssac_BarringForMMTEL_Voice_r9->ac_BarringTime         : %ld\n",
-           sib2->ext1->ssac_BarringForMMTEL_Voice_r9->ac_BarringTime );
+           sib2->ssac_BarringForMMTEL_Voice_r9->ac_BarringTime );
     LOG_I( RRC, "ssac_BarringForMMTEL_Voice_r9->ac_BarringForSpecialAC : %"PRIu32"\n",
-           BIT_STRING_to_uint32(&sib2->ext1->ssac_BarringForMMTEL_Voice_r9->ac_BarringForSpecialAC) );
+           BIT_STRING_to_uint32(&sib2->ssac_BarringForMMTEL_Voice_r9->ac_BarringForSpecialAC) );
   } else
     LOG_I( RRC, "ssac_BarringForMMTEL_Voice_r9 : not defined\n" );
 
-  if (sib2->ext1 && sib2->ext1->ssac_BarringForMMTEL_Video_r9) {
+  if (sib2->ssac_BarringForMMTEL_Video_r9) {
     LOG_I( RRC, "ssac_BarringForMMTEL_Video_r9->ac_BarringFactor       : %ld\n",
-           sib2->ext1->ssac_BarringForMMTEL_Video_r9->ac_BarringFactor );
+           sib2->ssac_BarringForMMTEL_Video_r9->ac_BarringFactor );
     LOG_I( RRC, "ssac_BarringForMMTEL_Video_r9->ac_BarringTime         : %ld\n",
-           sib2->ext1->ssac_BarringForMMTEL_Video_r9->ac_BarringTime );
+           sib2->ssac_BarringForMMTEL_Video_r9->ac_BarringTime );
     LOG_I( RRC, "ssac_BarringForMMTEL_Video_r9->ac_BarringForSpecialAC : %"PRIu32"\n",
-           BIT_STRING_to_uint32(&sib2->ext1->ssac_BarringForMMTEL_Video_r9->ac_BarringForSpecialAC) );
+           BIT_STRING_to_uint32(&sib2->ssac_BarringForMMTEL_Video_r9->ac_BarringForSpecialAC) );
   } else
     LOG_I( RRC, "ssac_BarringForMMTEL_Video_r9 : not defined\n" );
 
-  if (sib2->ext2 && sib2->ext2->ac_BarringForCSFB_r10) {
+  if (sib2->ac_BarringForCSFB_r10) {
     LOG_I( RRC, "ac_BarringForCSFB_r10->ac_BarringFactor       : %ld\n",
-           sib2->ext2->ac_BarringForCSFB_r10->ac_BarringFactor );
+           sib2->ac_BarringForCSFB_r10->ac_BarringFactor );
     LOG_I( RRC, "ac_BarringForCSFB_r10->ac_BarringTime         : %ld\n",
-           sib2->ext2->ac_BarringForCSFB_r10->ac_BarringTime );
+           sib2->ac_BarringForCSFB_r10->ac_BarringTime );
     LOG_I( RRC, "ac_BarringForCSFB_r10->ac_BarringForSpecialAC : %"PRIu32"\n",
-           BIT_STRING_to_uint32(&sib2->ext2->ac_BarringForCSFB_r10->ac_BarringForSpecialAC) );
+           BIT_STRING_to_uint32(&sib2->ac_BarringForCSFB_r10->ac_BarringForSpecialAC) );
   } else
     LOG_I( RRC, "ac_BarringForCSFB_r10 : not defined\n" );
 }
@@ -3825,12 +3824,12 @@ void dump_sib5( LTE_SystemInformationBlockType5_t *sib5 ) {
       }
     }
 
-    if (ifcfInfo->ext1 && ifcfInfo->ext1->q_QualMin_r9)
-      LOG_I(RRC,"   Q_QualMin_r9 : %ld\n",*ifcfInfo->ext1->q_QualMin_r9);
+    if (ifcfInfo->q_QualMin_r9)
+      LOG_I(RRC,"   Q_QualMin_r9 : %ld\n",*ifcfInfo->q_QualMin_r9);
 
-    if (ifcfInfo->ext1 && ifcfInfo->ext1->threshX_Q_r9) {
-      LOG_I(RRC,"   threshX_HighQ_r9 : %ld\n",ifcfInfo->ext1->threshX_Q_r9->threshX_HighQ_r9);
-      LOG_I(RRC,"   threshX_LowQ_r9: %ld\n",ifcfInfo->ext1->threshX_Q_r9->threshX_LowQ_r9);
+    if (ifcfInfo->threshX_Q_r9) {
+      LOG_I(RRC,"   threshX_HighQ_r9 : %ld\n",ifcfInfo->threshX_Q_r9->threshX_HighQ_r9);
+      LOG_I(RRC,"   threshX_LowQ_r9: %ld\n",ifcfInfo->threshX_Q_r9->threshX_LowQ_r9);
     }
   }
 }
@@ -5525,11 +5524,11 @@ rrc_ue_process_sidelink_radioResourceConfig(
     //to receive non-PS related discovery announcements (discRxPool)
     //sib19->discConfig_r12->discRxPool_r12;
     //to receive PS related discovery announcements (discRxPoolPS)
-    //sib19->ext1->discConfigPS_13->discRxPoolPS_r13;
+    //sib19->discConfigPS_13->discRxPoolPS_r13;
     //to transmit non-PS related discovery in RRC_IDLE
     //sib19->discConfig_r12->discTxPoolCommon_r12;
     //to transmit PS related discovery in RRC_IDLE
-    //sib19->ext1->discConfigPS_13->discTxPoolPS_Common_r13;
+    //sib19->discConfigPS_13->discTxPoolPS_Common_r13;
   }
 
   //process sl_CommConfig, configure MAC/PHY for transmitting SL communication (RRC_CONNECTED)
@@ -5603,24 +5602,24 @@ rrc_ue_process_sidelink_radioResourceConfig(
     }
 
     //dedicated resources for transmitting PS related discovery
-    if (sl_DiscConfig->ext2->discTxResourcesPS_r13 != NULL) {
-      switch (sl_DiscConfig->ext2->discTxResourcesPS_r13->present) {
-        case LTE_SL_DiscConfig_r12__ext2__discTxResourcesPS_r13_PR_setup:
-          if (sl_DiscConfig->ext2->discTxResourcesPS_r13->choice.setup.present == LTE_SL_DiscConfig_r12__ext2__discTxResourcesPS_r13__setup_PR_scheduled_r13) {
-            //sl_DiscConfig->ext2->discTxResourcesPS_r13->choice.setup.choice.scheduled_r13.discHoppingConfig_r13;
-            //sl_DiscConfig->ext2->discTxResourcesPS_r13->choice.setup.choice.scheduled_r13.discTxConfig_r13
-          } else if (sl_DiscConfig->ext2->discTxResourcesPS_r13->choice.setup.present == LTE_SL_DiscConfig_r12__ext2__discTxResourcesPS_r13__setup_PR_ue_Selected_r13) {
-            //sl_DiscConfig->ext2->discTxResourcesPS_r13->choice.setup.choice.ue_Selected_r13.discTxPoolPS_Dedicated_r13;
+    if (sl_DiscConfig->discTxResourcesPS_r13 != NULL) {
+      switch (sl_DiscConfig->discTxResourcesPS_r13->present) {
+        case LTE_SL_DiscConfig_r12__discTxResourcesPS_r13_PR_setup:
+          if (sl_DiscConfig->discTxResourcesPS_r13->choice.setup.present == LTE_SL_DiscConfig_r12__discTxResourcesPS_r13__setup_PR_scheduled_r13) {
+            //sl_DiscConfig->discTxResourcesPS_r13->choice.setup.choice.scheduled_r13.discHoppingConfig_r13;
+            //sl_DiscConfig->discTxResourcesPS_r13->choice.setup.choice.scheduled_r13.discTxConfig_r13
+          } else if (sl_DiscConfig->discTxResourcesPS_r13->choice.setup.present == LTE_SL_DiscConfig_r12__discTxResourcesPS_r13__setup_PR_ue_Selected_r13) {
+            //sl_DiscConfig->discTxResourcesPS_r13->choice.setup.choice.ue_Selected_r13.discTxPoolPS_Dedicated_r13;
           } else {
-            //SL_DiscConfig_r12__ext2__discTxResourcesPS_r13__setup_PR_NOTHING, /* No components present */
+            //SL_DiscConfig_r12__discTxResourcesPS_r13__setup_PR_NOTHING, /* No components present */
           }
 
           break;
 
-        case LTE_SL_DiscConfig_r12__ext2__discTxResourcesPS_r13_PR_release:
+        case LTE_SL_DiscConfig_r12__discTxResourcesPS_r13_PR_release:
           break;
 
-        case LTE_SL_DiscConfig_r12__ext2__discTxResourcesPS_r13_PR_NOTHING:
+        case LTE_SL_DiscConfig_r12__discTxResourcesPS_r13_PR_NOTHING:
           /* No components present */
           break;
 

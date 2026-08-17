@@ -25,6 +25,7 @@
 #define E1AP_ASNC_H
 
 #include <E1AP_Cause.h>
+#include <E1AP_TransactionID.h>
 #include <E1AP_InitiatingMessage.h>
 #include <E1AP_E1AP-PDU.h>
 #include <E1AP_ProtocolIE-Field.h>

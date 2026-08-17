@@ -1082,7 +1082,7 @@ void nr_schedule_ue_spec(module_id_t module_id,
     // TODO: verify the case where pdsch_servingcellconfig is NULL, in which case
     //       in principle maxMIMO_layers should be given by the maximum number of layers
     //       for PDSCH supported by the UE for the serving cell (5.4.2.1 of 38.212)
-    long maxMIMO_Layers = current_BWP->pdsch_servingcellconfig ? *current_BWP->pdsch_servingcellconfig->ext1->maxMIMO_Layers : 1;
+    long maxMIMO_Layers = (current_BWP->pdsch_servingcellconfig && current_BWP->pdsch_servingcellconfig->maxMIMO_Layers) ? *current_BWP->pdsch_servingcellconfig->maxMIMO_Layers : 1;
     const int nl_tbslbrm = min(maxMIMO_Layers, 4);
     // Maximum number of PRBs across all configured DL BWPs
     int scc_bwpsize = current_BWP->initial_BWPSize;
@@ -1095,8 +1095,8 @@ void nr_schedule_ue_spec(module_id_t module_id,
     NR_PDSCH_Config_t *pdsch_Config = current_BWP->pdsch_Config;
 
     /* Check and validate PTRS values */
-    struct NR_SetupRelease_PTRS_DownlinkConfig *phaseTrackingRS =
-        pdsch_Config ? pdsch_Config->dmrs_DownlinkForPDSCH_MappingTypeA->choice.setup->phaseTrackingRS : NULL;
+    NR_SetupRelease_PTRS_DownlinkConfig_t *phaseTrackingRS =
+        pdsch_Config ? (NR_SetupRelease_PTRS_DownlinkConfig_t *)((NR_SetupRelease_DMRS_DownlinkConfig_t *)pdsch_Config->dmrs_DownlinkForPDSCH_MappingTypeA)->choice.setup->phaseTrackingRS : NULL;
 
     if (phaseTrackingRS) {
       bool valid_ptrs_setup = set_dl_ptrs_values(phaseTrackingRS->choice.setup,

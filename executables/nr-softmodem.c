@@ -350,7 +350,7 @@ static int create_gNB_tasks(void) {
     __attribute__((unused)) uint32_t register_gnb_pending = gNB_app_register (gnb_id_start, gnb_id_end);
   }
 
-  if (gnb_nb > 0) {
+  if (gnb_nb > 0 && !IS_SOFTMODEM_NOS1) {
     if(itti_create_task(TASK_SCTP, sctp_eNB_task, NULL) < 0) {
       LOG_E(SCTP, "Create task for SCTP failed\n");
       return -1;

@@ -238,7 +238,11 @@ void threadCreate(pthread_t* t, void * (*func)(void*), void * param, char* name,
     if (checkIfGenericKernelOnFedora())
       if (checkIfInsideContainer())
         settingPriority = 0;
-  
+
+  /* RISC-V/QEMU: skip SCHED_FIFO when not root (no CAP_SYS_NICE) */
+  if (getuid() != 0)
+    settingPriority = 0;
+
   if (settingPriority) {
     ret=pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     AssertFatal(ret==0,"ret: %d, errno: %d\n",ret, errno);
@@ -269,7 +273,9 @@ void threadCreate(pthread_t* t, void * (*func)(void*), void * param, char* name,
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
     CPU_SET(affinity, &cpuset);
-    AssertFatal( pthread_setaffinity_np(*t, sizeof(cpu_set_t), &cpuset) == 0, "Error setting processor affinity");
+    /* RISC-V/QEMU: affinity set may fail without CAP_SYS_NICE, make non-fatal */
+    if (pthread_setaffinity_np(*t, sizeof(cpu_set_t), &cpuset) != 0)
+      LOG_E(UTIL, "Warning: could not set processor affinity for %s\n", name);
   }
   pthread_attr_destroy(&attr);
 }
@@ -316,6 +322,10 @@ void thread_top_init(char *thread_name,
     if (checkIfGenericKernelOnFedora())
       if (checkIfInsideContainer())
         settingPriority = 0;
+
+  /* RISC-V/QEMU: skip SCHED_FIFO when not root (no CAP_SYS_NICE) */
+  if (getuid() != 0)
+    settingPriority = 0;
 
   if (settingPriority) {
     memset(&sparam, 0, sizeof(sparam));

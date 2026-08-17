@@ -41,7 +41,7 @@
 
 int16_t nr_zeros[8] __attribute__ ((aligned(16))) = {0,0,0,0,0,0,0,0};
 int16_t nr_ones[8] __attribute__ ((aligned(16))) = {0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff};
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
 __m128i rho_rpi __attribute__ ((aligned(16)));
 __m128i rho_rmi __attribute__((aligned(16)));
 #endif
@@ -71,6 +71,11 @@ int nr_dlsch_qpsk_llr(NR_DL_FRAME_PARMS *frame_parms,
     LOG_E(PHY,"nr_dlsch_qpsk_llr: llr is null, symbol %d, llr32=%p\n",symbol, llr32);
     return(-1);
   }
+
+  // [DEBUG-RISCV] Check rxdataF_comp (equalizer output) and len
+  LOG_I(PHY,"[CKPT-QPSK] symb=%d len=%u nb_rb=%u rxF(first 8): ", symbol, len, nb_rb);
+  for (int _ck=0; _ck<8 && _ck<len; _ck++) LOG_I(PHY,"(%d,%d) ", rxF[_ck].r, rxF[_ck].i);
+  LOG_I(PHY,"\n");
 
   /*
   LOG_I(PHY,"dlsch_qpsk_llr: [symb %d / Length %d]: @LLR Buff %x, @LLR Buff(symb) %x \n",
@@ -105,7 +110,7 @@ void nr_dlsch_16qam_llr(NR_DL_FRAME_PARMS *frame_parms,
                      uint16_t nb_rb)
 {
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   __m128i *rxF = (__m128i*)&rxdataF_comp[(symbol*nb_rb*12)];
   __m128i *ch_mag;
   __m128i llr128[2];
@@ -122,13 +127,13 @@ void nr_dlsch_16qam_llr(NR_DL_FRAME_PARMS *frame_parms,
   unsigned char len_mod4=0;
 
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     llr32 = (uint32_t*)dlsch_llr;
 #elif defined(__arm__) || defined(__aarch64__)
     llr16 = (int16_t*)dlsch_llr;
 #endif
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     ch_mag = (__m128i *)dl_ch_mag;
 #elif defined(__arm__) || defined(__aarch64__)
     ch_mag = (int16x8_t *)dl_ch_mag;
@@ -144,7 +149,7 @@ void nr_dlsch_16qam_llr(NR_DL_FRAME_PARMS *frame_parms,
  // printf("len+=%d\n", len);
   for (i=0; i<len; i++) {
 
-#if defined(__x86_64__) || defined(__i386)
+#if defined(__x86_64__) || defined(__i386) || defined(OAI_SIMD_X86_EMULATION)
     __m128i xmm0;
     xmm0 = _mm_abs_epi16(rxF[i]);
     xmm0 = _mm_subs_epi16(ch_mag[i],xmm0);
@@ -187,7 +192,7 @@ void nr_dlsch_16qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 
   }
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   _mm_empty();
   _m_empty();
 #endif
@@ -207,7 +212,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 			uint8_t first_symbol_flag,
 			uint16_t nb_rb)
 {
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   __m128i *rxF = (__m128i*)&rxdataF_comp[(symbol*nb_rb*12)];
   __m128i *ch_mag,*ch_magb;
 #elif defined(__arm__) || defined(__aarch64__)
@@ -220,7 +225,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 
   llr2 = dlsch_llr;
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   ch_mag = (__m128i *)dl_ch_mag;
   ch_magb = (__m128i *)dl_ch_magb;
 #elif defined(__arm__) || defined(__aarch64__)
@@ -243,7 +248,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 
   for (i=0; i<len2; i++) {
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     __m128i xmm1, xmm2;
 
     xmm1 = _mm_abs_epi16(rxF[i]);
@@ -271,7 +276,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
     */
     llr2[0] = ((short *)&rxF[i])[0];
     llr2[1] = ((short *)&rxF[i])[1];
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     llr2[2] = _mm_extract_epi16(xmm1,0);
     llr2[3] = _mm_extract_epi16(xmm1,1);//((short *)&xmm1)[j+1];
     llr2[4] = _mm_extract_epi16(xmm2,0);//((short *)&xmm2)[j];
@@ -286,7 +291,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
     llr2+=6;
     llr2[0] = ((short *)&rxF[i])[2];
     llr2[1] = ((short *)&rxF[i])[3];
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     llr2[2] = _mm_extract_epi16(xmm1,2);
     llr2[3] = _mm_extract_epi16(xmm1,3);//((short *)&xmm1)[j+1];
     llr2[4] = _mm_extract_epi16(xmm2,2);//((short *)&xmm2)[j];
@@ -301,7 +306,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
     llr2+=6;
     llr2[0] = ((short *)&rxF[i])[4];
     llr2[1] = ((short *)&rxF[i])[5];
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     llr2[2] = _mm_extract_epi16(xmm1,4);
     llr2[3] = _mm_extract_epi16(xmm1,5);//((short *)&xmm1)[j+1];
     llr2[4] = _mm_extract_epi16(xmm2,4);//((short *)&xmm2)[j];
@@ -315,7 +320,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
     llr2+=6;
     llr2[0] = ((short *)&rxF[i])[6];
     llr2[1] = ((short *)&rxF[i])[7];
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     llr2[2] = _mm_extract_epi16(xmm1,6);
     llr2[3] = _mm_extract_epi16(xmm1,7);//((short *)&xmm1)[j+1];
     llr2[4] = _mm_extract_epi16(xmm2,6);//((short *)&xmm2)[j];
@@ -330,7 +335,7 @@ void nr_dlsch_64qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 
   }
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   _mm_empty();
   _m_empty();
 #endif
@@ -430,7 +435,7 @@ void nr_dlsch_256qam_llr(NR_DL_FRAME_PARMS *frame_parms,
 // QPSK
 //----------------------------------------------------------------------------------------------
 
-#if defined(__x86_64__) || defined(__i386)
+#if defined(__x86_64__) || defined(__i386) || defined(OAI_SIMD_X86_EMULATION)
 __m128i  y0r_over2 __attribute__ ((aligned(16)));
 __m128i  y0i_over2 __attribute__ ((aligned(16)));
 __m128i  y1r_over2 __attribute__ ((aligned(16)));
@@ -468,7 +473,7 @@ void nr_qpsk_qpsk(short *stream0_in,
     length = number of resource elements
   */
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   __m128i *rho01_128i = (__m128i *)rho01;
   __m128i *stream0_128i_in = (__m128i *)stream0_in;
   __m128i *stream1_128i_in = (__m128i *)stream1_in;
@@ -487,7 +492,7 @@ void nr_qpsk_qpsk(short *stream0_in,
 
   for (i=0; i<length>>2; i+=2) {
     // in each iteration, we take 8 complex samples
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     __m128i xmm0 = rho01_128i[i]; // 4 symbols
     __m128i xmm1 = rho01_128i[i + 1];
 
@@ -517,7 +522,7 @@ void nr_qpsk_qpsk(short *stream0_in,
     // Compute LLR for first bit of stream 0
 
     // Compute real and imaginary parts of MF output for stream 0
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     xmm0 = stream0_128i_in[i];
     xmm1 = stream0_128i_in[i+1];
 
@@ -539,7 +544,7 @@ void nr_qpsk_qpsk(short *stream0_in,
 
 #endif
     // Compute real and imaginary parts of MF output for stream 1
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
     xmm0 = stream1_128i_in[i];
     xmm1 = stream1_128i_in[i+1];
 
@@ -634,7 +639,7 @@ void nr_qpsk_qpsk(short *stream0_in,
 #endif
   }
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__) || defined(__i386__) || defined(OAI_SIMD_X86_EMULATION)
   _mm_empty();
   _m_empty();
 #endif

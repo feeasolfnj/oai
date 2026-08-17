@@ -208,11 +208,11 @@ init_SI(
       //    PROTOCOL_RRC_CTXT_ARGS(ctxt_pP),
       //    RC.rrc[ctxt_pP->module_id]->carrier[CC_id].sib1_MBMS->systemInformationBlockType13_r14->mbsfn_AreaInfoList_r9.list.array[i]->mcch_Config_r9.sf_AllocInfo_r9.buf);
 
-      if(RC.rrc[ctxt_pP->module_id]->carrier[CC_id].sib1_MBMS->systemInformationBlockType13_r14->mbsfn_AreaInfoList_r9.list.array[i]->ext1) {
+      if(RC.rrc[ctxt_pP->module_id]->carrier[CC_id].sib1_MBMS->systemInformationBlockType13_r14->mbsfn_AreaInfoList_r9.list.array[i]->subcarrierSpacingMBMS_r14) {
         LOG_I(RRC, PROTOCOL_RRC_CTXT_FMT" SIB1-MBMS Subcarrier Spacing MBMS: %s\n",
               PROTOCOL_RRC_CTXT_ARGS(ctxt_pP),
-              (*RC.rrc[ctxt_pP->module_id]->carrier[CC_id].sib1_MBMS->systemInformationBlockType13_r14->mbsfn_AreaInfoList_r9.list.array[i]->ext1->subcarrierSpacingMBMS_r14 ==
-               LTE_MBSFN_AreaInfo_r9__ext1__subcarrierSpacingMBMS_r14_khz_1dot25 ? "khz_1dot25": "khz_7dot5"));
+              (*RC.rrc[ctxt_pP->module_id]->carrier[CC_id].sib1_MBMS->systemInformationBlockType13_r14->mbsfn_AreaInfoList_r9.list.array[i]->subcarrierSpacingMBMS_r14 ==
+               LTE_MBSFN_AreaInfo_r9__subcarrierSpacingMBMS_r14_khz_1dot25 ? "khz_1dot25": "khz_7dot5"));
       }
     }
 
@@ -415,7 +415,7 @@ init_SI(
     sib1_v13ext = carrier->sib1_BR->nonCriticalExtension->nonCriticalExtension->nonCriticalExtension->nonCriticalExtension->nonCriticalExtension;
     // Basic Asserts for CE_level0 PRACH configuration
     LTE_RadioResourceConfigCommonSIB_t *radioResourceConfigCommon_BR = &carrier[CC_id].sib2_BR->radioResourceConfigCommon;
-    struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = radioResourceConfigCommon_BR->ext4->prach_ConfigCommon_v1310;
+    struct LTE_PRACH_ConfigSIB_v1310 *ext4_prach = radioResourceConfigCommon_BR->prach_ConfigCommon_v1310;
     LTE_PRACH_ParametersListCE_r13_t *prach_ParametersListCE_r13 = &ext4_prach->prach_ParametersListCE_r13;
     AssertFatal(prach_ParametersListCE_r13->list.count > 0, "prach_ParametersListCE_r13 is empty\n");
     LTE_PRACH_ParametersCE_r13_t *p = prach_ParametersListCE_r13->list.array[0];
@@ -2725,8 +2725,8 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
   /* End of CDRX configuration */
   sr_ProhibitTimer_r9 = CALLOC(1, sizeof(long));
   *sr_ProhibitTimer_r9 = 0;   // SR tx on PUCCH, Value in number of SR period(s). Value 0 = no timer for SR, Value 2 = 2*SR
-  mac_MainConfig->ext1 = CALLOC(1, sizeof(struct LTE_MAC_MainConfig__ext1));
-  mac_MainConfig->ext1->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
+  /* LTE_MAC_MainConfig has no ext1 wrapper in the generated struct; r9/r10/r12/r13 extension fields (e.g. sr_ProhibitTimer_r9) are direct members, so nothing to allocate here. */
+  mac_MainConfig->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
 
   // change the transmission mode for the primary component carrier
   // TODO: add codebook subset restriction here
@@ -2905,19 +2905,16 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
     else
       MeasObj2->measObject.choice.measObjectNR_r15.rs_ConfigSSB_r15.subcarrierSpacingSSB_r15 = LTE_RS_ConfigSSB_NR_r15__subcarrierSpacingSSB_r15_kHz30;      
     MeasObj2->measObject.choice.measObjectNR_r15.quantityConfigSet_r15 = 1;
-    MeasObj2->measObject.choice.measObjectNR_r15.ext1 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__ext1));
+    /* bandNR_r15 is a direct member of LTE_MeasObjectNR_r15 (no ext1 wrapper). */
+    MeasObj2->measObject.choice.measObjectNR_r15.bandNR_r15 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__bandNR_r15));
 
-    if (MeasObj2->measObject.choice.measObjectNR_r15.ext1 == NULL) exit(1);
+    if (MeasObj2->measObject.choice.measObjectNR_r15.bandNR_r15 == NULL) exit(1);
 
-    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 = calloc(1, sizeof(struct LTE_MeasObjectNR_r15__ext1__bandNR_r15));
-
-    if (MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15 == NULL) exit(1);
-
-    MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->present = LTE_MeasObjectNR_r15__ext1__bandNR_r15_PR_setup;
+    MeasObj2->measObject.choice.measObjectNR_r15.bandNR_r15->present = LTE_MeasObjectNR_r15__bandNR_r15_PR_setup;
     if (rrc_inst->nr_scg_ssb_freq > 2016666) //FR2
-      MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = 261;
-    else 
-      MeasObj2->measObject.choice.measObjectNR_r15.ext1->bandNR_r15->choice.setup = 78;
+      MeasObj2->measObject.choice.measObjectNR_r15.bandNR_r15->choice.setup = 261;
+    else
+      MeasObj2->measObject.choice.measObjectNR_r15.bandNR_r15->choice.setup = 78;
 
     asn1cSeqAdd(&MeasObj_list->list, MeasObj2);
   }
@@ -3059,17 +3056,14 @@ void rrc_eNB_generate_defaultRRCConnectionReconfiguration(const protocol_ctxt_t 
     ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.maxReportCells = 4;
     ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportInterval = LTE_ReportInterval_ms120;
     ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportAmount = LTE_ReportConfigInterRAT__reportAmount_infinity;
-    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7 = calloc(1, sizeof(struct LTE_ReportConfigInterRAT__ext7));
+    /* reportQuantityCellNR_r15 is a direct member of LTE_ReportConfigInterRAT (no ext7 wrapper). */
+    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportQuantityCellNR_r15 = calloc(1, sizeof(struct LTE_ReportQuantityNR_r15));
 
-    if (ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7 == NULL) exit(1);
+    if (ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportQuantityCellNR_r15 == NULL) exit(1);
 
-    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7->reportQuantityCellNR_r15 = calloc(1, sizeof(struct LTE_ReportQuantityNR_r15));
-
-    if (ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7->reportQuantityCellNR_r15 == NULL) exit(1);
-
-    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7->reportQuantityCellNR_r15->ss_rsrp = true;
-    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7->reportQuantityCellNR_r15->ss_rsrq = true;
-    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.ext7->reportQuantityCellNR_r15->ss_sinr = true;
+    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportQuantityCellNR_r15->ss_rsrp = true;
+    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportQuantityCellNR_r15->ss_rsrq = true;
+    ReportConfig_NR->reportConfig.choice.reportConfigInterRAT.reportQuantityCellNR_r15->ss_sinr = true;
     asn1cSeqAdd(&ReportConfig_list->list, ReportConfig_NR);
     LOG_A(RRC, "Generating RRCCConnectionReconfigurationRequest (NRUE Measurement Report Request).\n");
   }
@@ -3280,7 +3274,7 @@ static int encode_CG_ConfigInfo(
               "failed to allocate memory for cg_configinfo_IEs");
   if(ue_context_pP->ue_context.UE_Capability_MRDC) {
     RAT_Container_count++;
-    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_MRDC_Capability,NULL,
+    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_MRDC_Capability,
                                      (void *)ue_context_pP->ue_context.UE_Capability_MRDC,temp_buff,ASN_MAX_ENCODE_SIZE);
     AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                 enc_rval.failed_type->name, enc_rval.encoded);
@@ -3294,7 +3288,7 @@ static int encode_CG_ConfigInfo(
 
   if(ue_context_pP->ue_context.UE_Capability_nr) {
     RAT_Container_count++;
-    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_NR_Capability,NULL,
+    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_NR_Capability,
                                      (void *)ue_context_pP->ue_context.UE_Capability_nr,temp_buff,ASN_MAX_ENCODE_SIZE);
     AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                 enc_rval.failed_type->name, enc_rval.encoded);
@@ -3314,7 +3308,7 @@ static int encode_CG_ConfigInfo(
       asn1cSeqAdd(&ue_cap_rat_container_list->list, ue_cap_rat_container_MRDC);
     if (ue_cap_rat_container_nr != NULL)
       asn1cSeqAdd(&ue_cap_rat_container_list->list, ue_cap_rat_container_nr);
-    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_CapabilityRAT_ContainerList,NULL,
+    enc_rval = uper_encode_to_buffer(&asn_DEF_NR_UE_CapabilityRAT_ContainerList,
                                      (void *)ue_cap_rat_container_list,temp_buff,ASN_MAX_ENCODE_SIZE);
     AssertFatal(enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %jd)!\n",
                 enc_rval.failed_type->name, enc_rval.encoded);
@@ -3324,7 +3318,7 @@ static int encode_CG_ConfigInfo(
 
   // this xer_fprint can be enabled for additional debugging messages
   // xer_fprint(stdout,&asn_DEF_NR_CG_ConfigInfo,(void *)cg_configinfo);
-  enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CG_ConfigInfo,NULL,(void *)cg_configinfo,
+  enc_rval = uper_encode_to_buffer(&asn_DEF_NR_CG_ConfigInfo,(void *)cg_configinfo,
                                    buffer,buffer_size);
   AssertFatal (enc_rval.encoded > 0, "ASN1 message encoding failed (%s, %lu)!\n",
                enc_rval.failed_type->name, enc_rval.encoded);
@@ -4303,8 +4297,8 @@ rrc_eNB_generate_HO_RRCConnectionReconfiguration(const protocol_ctxt_t *const ct
   mac_MainConfig->phr_Config->choice.setup.dl_PathlossChange = LTE_MAC_MainConfig__phr_Config__setup__dl_PathlossChange_dB1;  // Value dB1 =1 dB, dB3 = 3 dB
   sr_ProhibitTimer_r9 = CALLOC(1, sizeof(long));
   *sr_ProhibitTimer_r9 = 0;   // SR tx on PUCCH, Value in number of SR period(s). Value 0 = no timer for SR, Value 2= 2*SR
-  mac_MainConfig->ext1 = CALLOC(1, sizeof(struct LTE_MAC_MainConfig__ext1));
-  mac_MainConfig->ext1->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
+  /* LTE_MAC_MainConfig has no ext1 wrapper in the generated struct; r9/r10/r12/r13 extension fields (e.g. sr_ProhibitTimer_r9) are direct members, so nothing to allocate here. */
+  mac_MainConfig->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
   //sps_RA_ConfigList_rlola = NULL;
 
   //change the transmission mode for the primary component carrier
@@ -4588,8 +4582,8 @@ rrc_eNB_generate_HO_RRCConnectionReconfiguration(const protocol_ctxt_t *const ct
   mac_MainConfig->phr_Config->choice.setup.dl_PathlossChange = LTE_MAC_MainConfig__phr_Config__setup__dl_PathlossChange_dB1;  // Value dB1 =1 dB, dB3 = 3 dB
   sr_ProhibitTimer_r9 = CALLOC(1, sizeof(long));
   *sr_ProhibitTimer_r9 = 0;   // SR tx on PUCCH, Value in number of SR period(s). Value 0 = no timer for SR, Value 2= 2*SR
-  mac_MainConfig->ext1 = CALLOC(1, sizeof(struct LTE_MAC_MainConfig__ext1));
-  mac_MainConfig->ext1->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
+  /* LTE_MAC_MainConfig has no ext1 wrapper in the generated struct; r9/r10/r12/r13 extension fields (e.g. sr_ProhibitTimer_r9) are direct members, so nothing to allocate here. */
+  mac_MainConfig->sr_ProhibitTimer_r9 = sr_ProhibitTimer_r9;
   // Measurement ID list
   MeasId_list = CALLOC(1, sizeof(*MeasId_list));
   memset((void *)MeasId_list, 0, sizeof(*MeasId_list));
@@ -8256,7 +8250,7 @@ LTE_SL_CommConfig_r12_t rrc_eNB_get_sidelink_commTXPool( const protocol_ctxt_t *
   sc_CommTxConfig->txParameters_r12 = CALLOC (1, sizeof (*sc_CommTxConfig->txParameters_r12));
   sc_CommTxConfig->txParameters_r12->sc_TxParameters_r12.alpha_r12 = LTE_Alpha_r12_al0;
   sc_CommTxConfig->txParameters_r12->sc_TxParameters_r12.p0_r12 = 0;
-  sc_CommTxConfig->ext1 = NULL ;
+  /* LTE_SL_CommResourcePool_r12 has no ext1 wrapper (priorityList_r13 is a direct member); nothing to NULL. */
   return *sl_CommConfig;
 }
 

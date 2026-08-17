@@ -24,6 +24,7 @@
 #include <openair2/LAYER2/nr_pdcp/nr_pdcp_oai_api.h>
 #include <openair3/ocp-gtpu/gtp_itf.h>
 #include "openair2/LAYER2/nr_pdcp/nr_pdcp_ue_manager.h"
+#include "executables/softmodem-common.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -207,24 +208,34 @@ static void nr_sdap_rx_entity(nr_sdap_entity_t *entity,
       }
     }
 
-    // Pushing SDAP SDU to GTP-U Layer
-    MessageDef *message_p = itti_alloc_new_message_sized(TASK_PDCP_ENB,
-                                                         0,
-                                                         GTPV1U_TUNNEL_DATA_REQ,
-                                                         sizeof(gtpv1u_tunnel_data_req_t)
-                                                           + size + GTPU_HEADER_OVERHEAD_MAX - offset);
-    AssertFatal(message_p != NULL, "OUT OF MEMORY");
-    gtpv1u_tunnel_data_req_t *req = &GTPV1U_TUNNEL_DATA_REQ(message_p);
-    uint8_t *gtpu_buffer_p = (uint8_t *) (req + 1);
-    memcpy(gtpu_buffer_p + GTPU_HEADER_OVERHEAD_MAX, buf + offset, size - offset);
-    req->buffer        = gtpu_buffer_p;
-    req->length        = size - offset;
-    req->offset        = GTPU_HEADER_OVERHEAD_MAX;
-    req->ue_id         = ue_id;
-    req->bearer_id     = pdusession_id;
-    LOG_D(SDAP, "%s()  sending message to gtp size %d\n", __func__,  size-offset);
-    // very very dirty hack gloabl var N3GTPUInst
-    itti_send_msg_to_task(TASK_GTPV1_U, *N3GTPUInst, message_p);
+    if (IS_SOFTMODEM_NOS1) {
+      /* noS1 mode: write uplink data directly to gNB TUN interface */
+      extern int nas_sock_fd[];
+      int len = write(nas_sock_fd[0], &buf[offset], size - offset);
+      LOG_I(SDAP, "gNB TUN write (noS1): len=%d, size=%d, offset=%d, ue_id=%lx\n",
+            len, size, offset, (unsigned long)ue_id);
+      if (len != size - offset)
+        LOG_E(SDAP, "%s:%d:%s: gNB TUN write failed\n", __FILE__, __LINE__, __FUNCTION__);
+    } else {
+      /* normal mode: Pushing SDAP SDU to GTP-U Layer */
+      MessageDef *message_p = itti_alloc_new_message_sized(TASK_PDCP_ENB,
+                                                           0,
+                                                           GTPV1U_TUNNEL_DATA_REQ,
+                                                           sizeof(gtpv1u_tunnel_data_req_t)
+                                                             + size + GTPU_HEADER_OVERHEAD_MAX - offset);
+      AssertFatal(message_p != NULL, "OUT OF MEMORY");
+      gtpv1u_tunnel_data_req_t *req = &GTPV1U_TUNNEL_DATA_REQ(message_p);
+      uint8_t *gtpu_buffer_p = (uint8_t *) (req + 1);
+      memcpy(gtpu_buffer_p + GTPU_HEADER_OVERHEAD_MAX, buf + offset, size - offset);
+      req->buffer        = gtpu_buffer_p;
+      req->length        = size - offset;
+      req->offset        = GTPU_HEADER_OVERHEAD_MAX;
+      req->ue_id         = ue_id;
+      req->bearer_id     = pdusession_id;
+      LOG_D(SDAP, "%s()  sending message to gtp size %d\n", __func__,  size-offset);
+      // very very dirty hack gloabl var N3GTPUInst
+      itti_send_msg_to_task(TASK_GTPV1_U, *N3GTPUInst, message_p);
+    }
   } else { //nrUE
     /*
      * TS 37.324 5.2 Data transfer
@@ -301,9 +312,7 @@ static void nr_sdap_rx_entity(nr_sdap_entity_t *entity,
      */
     extern int nas_sock_fd[];
     int len = write(nas_sock_fd[0], &buf[offset], size-offset);
-    LOG_D(SDAP, "RX Entity len : %d\n", len);
-    LOG_D(SDAP, "RX Entity size : %d\n", size);
-    LOG_D(SDAP, "RX Entity offset : %d\n", offset);
+    LOG_I(SDAP, "UE TUN write: len=%d, size=%d, offset=%d, is_gnb=%d\n", len, size, offset, is_gnb);
 
     if (len != size-offset)
       LOG_E(SDAP, "%s:%d:%s: fatal\n", __FILE__, __LINE__, __FUNCTION__);

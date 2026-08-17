@@ -637,7 +637,7 @@ void rrc_eNB_send_S1AP_UE_CAPABILITIES_IND(
     return;
   }
 
-  asn_enc_rval_t ret = uper_encode_to_buffer(&asn_DEF_LTE_UECapabilityInformation, NULL, ueCapabilityInformation, buf, 4096);
+  asn_enc_rval_t ret = uper_encode_to_buffer(&asn_DEF_LTE_UECapabilityInformation, ueCapabilityInformation, buf, 4096);
 
   if (ret.encoded == -1) abort();
 
@@ -652,7 +652,7 @@ void rrc_eNB_send_S1AP_UE_CAPABILITIES_IND(
 
   if (buf2 == NULL) abort();
 
-  ret = uper_encode_to_buffer(&asn_DEF_LTE_UERadioAccessCapabilityInformation, NULL, &rac, buf2, 8192);
+  ret = uper_encode_to_buffer(&asn_DEF_LTE_UERadioAccessCapabilityInformation, &rac, buf2, 8192);
 
   if (ret.encoded == -1) abort();
 

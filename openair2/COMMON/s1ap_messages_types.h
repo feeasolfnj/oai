@@ -162,7 +162,7 @@ typedef struct nr_security_capabilities_s {
 
 /* Provides the establishment cause for the RRC connection request as provided
  * by the upper layers. W.r.t. the cause value names: highPriorityAccess
- * concerns AC11..AC15, â€˜mtâ€™ stands for â€˜Mobile Terminatingâ€™ and â€˜moâ€™ for
+ * concerns AC11..AC15, ¡®mt¡¯ stands for ¡®Mobile Terminating¡¯ and ¡®mo¡¯ for
  * 'Mobile Originating'. Defined in TS 36.331.
  */
 typedef enum rrc_establishment_cause_e {

@@ -90,14 +90,10 @@ void init_RA(module_id_t mod_id,
       LOG_I(MAC, "Initialization of 2-step contention-free random access procedure\n");
       prach_resources->RA_TYPE = RA_2STEP;
       ra->cfra = 1;
-    } else if (rach_ConfigDedicated->ext1){
-      if (rach_ConfigDedicated->ext1->cfra_TwoStep_r16){
-        LOG_I(MAC, "In %s: setting RA type to 2-step...\n", __FUNCTION__);
-        prach_resources->RA_TYPE = RA_2STEP;
-        ra->cfra = 1;
-      } else {
-        LOG_E(MAC, "In %s: config not handled\n", __FUNCTION__);
-      }
+    } else if (rach_ConfigDedicated->cfra_TwoStep_r16){
+      LOG_I(MAC, "In %s: setting RA type to 2-step...\n", __FUNCTION__);
+      prach_resources->RA_TYPE = RA_2STEP;
+      ra->cfra = 1;
     } else {
       LOG_E(MAC, "In %s: config not handled\n", __FUNCTION__);
     }
@@ -160,10 +156,8 @@ void init_RA(module_id_t mod_id,
       break;
   }
 
-  if (nr_rach_ConfigCommon->ext1) {
-    if (nr_rach_ConfigCommon->ext1->ra_PrioritizationForAccessIdentity_r16){
-      LOG_D(MAC, "In %s:%d: Missing implementation for Access Identity initialization procedures\n", __FUNCTION__, __LINE__);
-    }
+  if (nr_rach_ConfigCommon->ra_PrioritizationForAccessIdentity_r16){
+    LOG_D(MAC, "In %s:%d: Missing implementation for Access Identity initialization procedures\n", __FUNCTION__, __LINE__);
   }
 }
 
@@ -636,8 +630,9 @@ uint8_t nr_ue_get_rach(module_id_t mod_id,
     if ((mac->first_sync_frame > -1 || get_softmodem_params()->do_ra || get_softmodem_params()->nsa) &&
        ((MAX_FRAME_NUMBER + frame - mac->first_sync_frame) % MAX_FRAME_NUMBER) > 150) {
       ra->ra_state = GENERATE_PREAMBLE;
+      LOG_I(NR_MAC,"PRACH Condition met: ra state %d, frame %d, sync_frame %d, new_ra_state %d\n", ra->ra_state, frame, mac->first_sync_frame, ra->ra_state);
     } else {
-      LOG_D(NR_MAC,"PRACH Condition not met: ra state %d, frame %d, sync_frame %d\n", ra->ra_state, frame, mac->first_sync_frame);
+      LOG_I(NR_MAC,"PRACH Condition not met: ra state %d, frame %d, sync_frame %d, do_ra %d, nsa %d\n", ra->ra_state, frame, mac->first_sync_frame, get_softmodem_params()->do_ra, get_softmodem_params()->nsa);
       return 0;
     }
   }

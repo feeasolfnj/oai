@@ -37,6 +37,7 @@
 #include "intertask_interface.h"
 #include "ngap_common.h"
 #include "ngap_gNB_encoder.h"
+#include "per_encoder.h"
 
 static inline int ngap_gNB_encode_initiating(NGAP_NGAP_PDU_t *pdu, uint8_t **buffer, uint32_t *len)
 {
@@ -59,10 +60,11 @@ static inline int ngap_gNB_encode_initiating(NGAP_NGAP_PDU_t *pdu, uint8_t **buf
     return -1;
   }
 
-  asn_encode_to_new_buffer_result_t res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_NGAP_NGAP_PDU, pdu);
-  AssertFatal(res.result.encoded > 0, "failed to encode NGAP msg\n");
-  *buffer = res.buffer;
-  *len = res.result.encoded;
+  void *encode_buffer = NULL;
+  ssize_t encoded_len = aper_encode_to_new_buffer(&asn_DEF_NGAP_NGAP_PDU, NULL, pdu, &encode_buffer);
+  AssertFatal(encoded_len > 0, "failed to encode NGAP msg\n");
+  *buffer = (uint8_t *)encode_buffer;
+  *len = (uint32_t)encoded_len;
   return 0;
 }
 
@@ -83,10 +85,11 @@ static inline int ngap_gNB_encode_successfull_outcome(NGAP_NGAP_PDU_t *pdu, uint
     return -1;
   }
 
-  asn_encode_to_new_buffer_result_t res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_NGAP_NGAP_PDU, pdu);
-  AssertFatal(res.result.encoded > 0, "failed to encode NGAP msg\n");
-  *buffer = res.buffer;
-  *len = res.result.encoded;
+  void *encode_buffer = NULL;
+  ssize_t encoded_len = aper_encode_to_new_buffer(&asn_DEF_NGAP_NGAP_PDU, NULL, pdu, &encode_buffer);
+  AssertFatal(encoded_len > 0, "failed to encode NGAP msg\n");
+  *buffer = (uint8_t *)encode_buffer;
+  *len = (uint32_t)encoded_len;
   return 0;
 }
 
@@ -99,10 +102,11 @@ static inline int ngap_gNB_encode_unsuccessfull_outcome(NGAP_NGAP_PDU_t *pdu, ui
     return -1;
   }
 
-  asn_encode_to_new_buffer_result_t res = asn_encode_to_new_buffer(NULL, ATS_ALIGNED_CANONICAL_PER, &asn_DEF_NGAP_NGAP_PDU, pdu);
-  AssertFatal(res.result.encoded > 0, "failed to encode NGAP msg\n");
-  *buffer = res.buffer;
-  *len = res.result.encoded;
+  void *encode_buffer = NULL;
+  ssize_t encoded_len = aper_encode_to_new_buffer(&asn_DEF_NGAP_NGAP_PDU, NULL, pdu, &encode_buffer);
+  AssertFatal(encoded_len > 0, "failed to encode NGAP msg\n");
+  *buffer = (uint8_t *)encode_buffer;
+  *len = (uint32_t)encoded_len;
   return 0;
 }
 

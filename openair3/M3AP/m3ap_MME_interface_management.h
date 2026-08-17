@@ -86,7 +86,7 @@ int MME_handle_RESET(instance_t instance,
                     uint32_t assoc_id,
                     uint32_t stream,
                     M3AP_M3AP_PDU_t *pdu);
-int MME_send_RESET_ACKNOWLEDGE(instance_t instance, M3AP_ResetAcknowledge_t *ResetAcknowledge);
+int MME_send_RESET_ACKNOWLEDGE(instance_t instance, void *ResetAcknowledge);
 
 /*
  * M3AP Setup

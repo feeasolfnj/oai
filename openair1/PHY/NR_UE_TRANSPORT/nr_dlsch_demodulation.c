@@ -621,6 +621,12 @@ int nr_rx_pdsch(PHY_VARS_NR_UE *ue,
                              codeword_TB0,
                              codeword_TB1,
                              layer_llr);
+    // [DEBUG-RISCV] Checkpoint A: after layer demapping, llr[0] should be non-zero
+    if (llr[0]) {
+      LOG_I(PHY, "[CKPT-A] nr_rx_pdsch output llr[0] first 8 (G=%u, Qm=%u): ", dlsch0_harq->G, dlsch[0].dlsch_config.qamModOrder);
+      for (int _ck=0; _ck<8; _ck++) LOG_I(PHY, "%d ", llr[0][_ck]);
+      LOG_I(PHY, "\n");
+    }
     // if (llr[0][0]) abort();
     for (int i=0; i<NR_MAX_NB_LAYERS; i++)
       free(layer_llr[i]);
@@ -751,7 +757,7 @@ void nr_dlsch_channel_compensation(uint32_t rx_size_symbol,
                                    PHY_NR_MEASUREMENTS *measurements)
 {
 
-#if defined(__i386) || defined(__x86_64)
+#if defined(__i386) || defined(__x86_64) || defined(OAI_SIMD_X86_EMULATION)
 
   unsigned short rb;
   unsigned char aarx,atx;
@@ -1244,7 +1250,7 @@ void nr_dlsch_scale_channel(uint32_t rx_size_symbol,
                             unsigned short nb_rb)
 {
 
-#if defined(__x86_64__)||defined(__i386__)
+#if defined(__x86_64__)||defined(__i386__)||defined(OAI_SIMD_X86_EMULATION)
 
   short rb, ch_amp;
   unsigned char aatx,aarx;
@@ -1299,7 +1305,7 @@ void nr_dlsch_channel_level(uint32_t rx_size_symbol,
 			                      unsigned short nb_rb)
 {
 
-#if defined(__x86_64__)||defined(__i386__)
+#if defined(__x86_64__)||defined(__i386__)||defined(OAI_SIMD_X86_EMULATION)
 
   short rb;
   unsigned char aatx,aarx;
@@ -1400,7 +1406,7 @@ void nr_dlsch_channel_level(uint32_t rx_size_symbol,
 static void nr_dlsch_channel_level_median(uint32_t rx_size_symbol, int32_t dl_ch_estimates_ext[][rx_size_symbol], int32_t *median, int n_tx, int n_rx, int length)
 {
 
-#if defined(__x86_64__)||defined(__i386__)
+#if defined(__x86_64__)||defined(__i386__)||defined(OAI_SIMD_X86_EMULATION)
 
   short ii;
   int aatx,aarx;
@@ -1622,7 +1628,7 @@ void nr_dlsch_detection_mrc(uint32_t rx_size_symbol,
                             unsigned short nb_rb,
                             int length)
 {
-#if defined(__x86_64__)||defined(__i386__)
+#if defined(__x86_64__)||defined(__i386__)||defined(OAI_SIMD_X86_EMULATION)
   unsigned char aatx, aarx;
   int i;
   __m128i *rxdataF_comp128_0,*rxdataF_comp128_1,*dl_ch_mag128_0,*dl_ch_mag128_1,*dl_ch_mag128_0b,*dl_ch_mag128_1b,*dl_ch_mag128_0r,*dl_ch_mag128_1r;

@@ -1,0 +1,10 @@
+prefix=/home/kongbai/openairinterface5g/cmake_targets/riscv64-stubs
+exec_prefix=${prefix}
+libdir=${prefix}
+includedir=${prefix}/include
+
+Name: openssl
+Description: OpenSSL cryptography library (compatibility stubs for RISC-V cross-compilation)
+Version: 3.0.0
+Libs: -L${libdir} -lssl_stubs
+Cflags: -I${includedir}

@@ -147,6 +147,10 @@ void nr_fill_rx_indication(fapi_nr_rx_indication_t *rx_ind,
         rx_ind->rx_indication_body[n_pdus - 1].pdsch_pdu.ack_nack = dl_harq0->ack;
         rx_ind->rx_indication_body[n_pdus - 1].pdsch_pdu.pdu = b;
         rx_ind->rx_indication_body[n_pdus - 1].pdsch_pdu.pdu_length = dlsch0->dlsch_config.TBS / 8;
+        // Debug: dump first 20 bytes of b to verify LDPC output
+        LOG_I(PHY, "nr_fill_rx_indication: n_pdus=%d, pdu_length=%d, b first 20 bytes: ", n_pdus, dlsch0->dlsch_config.TBS / 8);
+        for (int k=0; k<20; k++) LOG_I(PHY, "%02x ", b[k]);
+        LOG_I(PHY, "\n");
       }
       if(dlsch1) {
         AssertFatal(1==0,"Second codeword currently not supported\n");
@@ -681,6 +685,12 @@ bool nr_ue_dlsch_procedures(PHY_VARS_NR_UE *ue,
 
   LOG_D(PHY,"AbsSubframe %d.%d Start LDPC Decoder for CW0 [harq_pid %d] ? %d \n", frame_rx%1024, nr_slot_rx, harq_pid, is_cw0_active);
   LOG_D(PHY,"AbsSubframe %d.%d Start LDPC Decoder for CW1 [harq_pid %d] ? %d \n", frame_rx%1024, nr_slot_rx, harq_pid, is_cw1_active);
+  // [DEBUG-RISCV] Print llr[0] values in the same LOG_D block we KNOW fires (CKPT B+C equivalent)
+  if (is_cw0_active == ACTIVE && llr[0]) {
+    LOG_D(PHY,"[DEBUG-RISCV-CKPT-B] pre-unscramble llr[0] first 16 (G=%u, rnti=%u, Qm=%u):", dl_harq0->G, dlsch[0].rnti, dlsch[0].dlsch_config.qamModOrder);
+    for (int _ck=0; _ck<16; _ck++) LOG_D(PHY," %d", llr[0][_ck]);
+    LOG_D(PHY,"\n");
+  }
 
   // exit dlsch procedures as there are no active dlsch
   if (is_cw0_active != ACTIVE && is_cw1_active != ACTIVE) {
@@ -698,6 +708,13 @@ bool nr_ue_dlsch_procedures(PHY_VARS_NR_UE *ue,
                          dlsch[0].dlsch_config.qamModOrder,
                          dlsch[0].Nl);
 
+  // [DEBUG-RISCV] Checkpoint B: before unscrambling, llr[0] should be non-zero
+  if (llr[0]) {
+    LOG_I(PHY, "[CKPT-B] pre-unscramble llr[0] first 8 (G=%u, rnti=%u): ", dl_harq0->G, dlsch[0].rnti);
+    for (int _ck=0; _ck<8; _ck++) LOG_I(PHY, "%d ", llr[0][_ck]);
+    LOG_I(PHY, "\n");
+  }
+
   start_meas(&ue->dlsch_unscrambling_stats);
   nr_dlsch_unscrambling(llr[0],
                         dl_harq0->G,
@@ -706,7 +723,20 @@ bool nr_ue_dlsch_procedures(PHY_VARS_NR_UE *ue,
                         dlsch[0].rnti);
     
 
+  // [DEBUG-RISCV] Checkpoint C: after unscrambling, llr[0] should be non-zero
+  if (llr[0]) {
+    LOG_I(PHY, "[CKPT-C] post-unscramble llr[0] first 8: ");
+    for (int _ck=0; _ck<8; _ck++) LOG_I(PHY, "%d ", llr[0][_ck]);
+    LOG_I(PHY, "\n");
+  }
+
   stop_meas(&ue->dlsch_unscrambling_stats);
+  // [DEBUG-RISCV] CKPT-C CW0: post-unscramble llr[0] values (before decoding)
+  if (llr[0]) {
+    LOG_D(PHY,"[DEBUG-RISCV-CKPT-C] post-unscramble llr[0] first 16:");
+    for (int _ck=0; _ck<16; _ck++) LOG_D(PHY," %d", llr[0][_ck]);
+    LOG_D(PHY,"\n");
+  }
 
   start_meas(&ue->dlsch_decoding_stats);
 
@@ -718,7 +748,11 @@ bool nr_ue_dlsch_procedures(PHY_VARS_NR_UE *ue,
     a_segments = (a_segments/273)+1;
   }
   uint32_t dlsch_bytes = a_segments*1056;  // allocated bytes per segment
-  __attribute__ ((aligned(32))) uint8_t p_b[dlsch_bytes];
+  // Use heap allocation instead of stack to prevent dangling pointer
+  // p_b address is stored in pdsch_pdu.pdu and accessed by MAC layer
+  // after this function returns, so it must persist beyond stack frame
+  uint8_t *p_b = aligned_alloc(32, dlsch_bytes);
+  AssertFatal(p_b != NULL, "Failed to allocate p_b (%u bytes)\n", dlsch_bytes);
 
   ret = nr_dlsch_decoding(ue,
                           proc,
